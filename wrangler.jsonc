@@ -1,0 +1,20 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "garmin-connect-personal-api-mcp",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-10-31",
+  "observability": {
+    "enabled": true,
+  },
+  // KV IDs are filled in on first deploy (automatic provisioning / Deploy to Cloudflare).
+  "kv_namespaces": [
+    {
+      "binding": "OAUTH_KV",
+    },
+    {
+      "binding": "GARMIN_KV",
+    },
+  ],
+  // Optional vars, set in the dashboard or here:
+  //   TIMEZONE: IANA time zone override, e.g. "Europe/Helsinki" (default: Garmin profile)
+}

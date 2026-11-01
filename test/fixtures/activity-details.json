@@ -1,0 +1,29 @@
+{
+  "activityId": 10000000003,
+  "measurementCount": 4,
+  "metricsCount": 3,
+  "totalMetricsCount": 3300,
+  "metricDescriptors": [
+    {
+      "metricsIndex": 0,
+      "key": "directTimestamp",
+      "unit": { "id": 120, "key": "gmt", "factor": 0.0 }
+    },
+    {
+      "metricsIndex": 1,
+      "key": "directHeartRate",
+      "unit": { "id": 100, "key": "bpm", "factor": 1.0 }
+    },
+    { "metricsIndex": 2, "key": "directSpeed", "unit": { "id": 20, "key": "mps", "factor": 0.1 } },
+    { "metricsIndex": 3, "key": "directLatitude", "unit": { "id": 60, "key": "dd", "factor": 1.0 } }
+  ],
+  "activityDetailMetrics": [
+    { "metrics": [1772550000000.0, 95.0, 2.5, 60.0] },
+    { "metrics": [1772551650000.0, 165.0, 4.7, 60.001] },
+    { "metrics": [1772553300000.0, 140.0, null, 60.002] }
+  ],
+  "geoPolylineDTO": null,
+  "heartRateDTOs": null,
+  "pendingData": null,
+  "detailsAvailable": true
+}

@@ -1,0 +1,60 @@
+{
+  "name": "garmin-connect-personal-api-mcp",
+  "version": "0.1.0",
+  "description": "Unofficial, self-hosted MCP server for the Garmin Connect Personal API, running on Cloudflare Workers.",
+  "license": "MIT",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "types": "wrangler types --env-file .dev.vars.example",
+    "types:check": "wrangler types --check --env-file .dev.vars.example",
+    "typecheck": "tsc -p . && tsc -p test && tsc -p scripts",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "check": "npm run types:check && npm run typecheck && npm run lint && npm run format:check && npm run test",
+    "today": "tsx scripts/today.ts"
+  },
+  "cloudflare": {
+    "bindings": {
+      "GARMIN_API_KEY": {
+        "description": "Garmin Connect Personal API key. Create it in Garmin Connect on the web under **Personal API Key**. It is shown only once and expires (30 days – 1 year)."
+      },
+      "OWNER_PASSPHRASE": {
+        "description": "Passphrase you enter once when adding the connector in Claude. Generate a strong one with `openssl rand -base64 32` and keep it in a password manager."
+      },
+      "COOKIE_ENCRYPTION_KEY": {
+        "description": "Random secret that signs the login form's CSRF cookie. Generate with `openssl rand -base64 32`."
+      },
+      "OAUTH_KV": {
+        "description": "KV namespace for OAuth clients, grants and tokens."
+      },
+      "GARMIN_KV": {
+        "description": "KV namespace for the cached Garmin access token and small caches."
+      }
+    }
+  },
+  "devDependencies": {
+    "@eslint/js": "10.0.1",
+    "@types/node": "24.19.2",
+    "eslint": "10.14.0",
+    "eslint-config-prettier": "10.1.8",
+    "prettier": "3.9.10",
+    "tsx": "4.23.15",
+    "typescript": "6.0.3",
+    "typescript-eslint": "8.72.1",
+    "vitest": "5.0.5",
+    "wrangler": "4.156.0"
+  },
+  "allowScripts": {
+    "esbuild@0.28.2": true,
+    "workerd@1.20261023.1": true
+  }
+}
