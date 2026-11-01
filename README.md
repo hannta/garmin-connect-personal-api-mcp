@@ -8,11 +8,10 @@ A self-hosted, read-only [MCP](https://modelcontextprotocol.io) server that give
 data through the official **Garmin Connect Personal API**. It runs on your own
 Cloudflare account, so it works in the Claude web and mobile apps as a custom connector.
 
-**Status:** early development — not usable yet. See [PLAN.md](PLAN.md).
+**Status:** early development. The MCP server and tools work locally; OAuth and
+deployment come next, so it can't be connected to Claude yet. See [PLAN.md](PLAN.md).
 
-## Planned tools
-
-First release:
+## Tools
 
 | Tool                       | What it returns                                                                                  |
 | -------------------------- | ------------------------------------------------------------------------------------------------ |
@@ -23,7 +22,9 @@ First release:
 | `garmin_get_hrv`           | One night's HRV with baseline and status                                                         |
 | `garmin_get_profile`       | Profile settings and heart-rate zones                                                            |
 
-All output is metric (km, min/km, kg).
+All output is metric (km, min/km, kg), with the unit in every field name. Dates are
+`YYYY-MM-DD` in your time zone (from your Garmin profile, or the `TIMEZONE` var);
+sleep and HRV are keyed by the wake-up date. Location data is never returned.
 
 ## Free vs. paid Cloudflare plan
 
@@ -51,7 +52,13 @@ npm install
 cp .dev.vars.example .dev.vars   # then add your GARMIN_API_KEY
 npm run check                     # typecheck, lint, format check, tests
 npm run today                     # print today's recovery data using your key
+npm run dev                       # MCP server at http://localhost:8787/mcp
 ```
+
+Until OAuth is added, the MCP endpoint has no authentication, so it only answers on
+localhost; a deployed Worker refuses MCP requests. Try it with the
+[MCP Inspector](https://github.com/modelcontextprotocol/inspector) (Streamable HTTP,
+`http://localhost:8787/mcp`).
 
 `.dev.vars` is git-ignored. Tests use synthetic fixtures only — never real data.
 

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  speedToPacePer100m,
   formatDuration,
   formatHoursMinutes,
   gramsToKg,
@@ -60,5 +61,12 @@ describe('units', () => {
   it('converts grams to kg', () => {
     expect(gramsToKg(76505)).toBe(76.5);
     expect(gramsToKg(undefined)).toBeNull();
+  });
+});
+
+describe('speedToPacePer100m', () => {
+  it('formats swimming pace', () => {
+    expect(speedToPacePer100m(1)).toBe('1:40');
+    expect(speedToPacePer100m(0)).toBeNull();
   });
 });

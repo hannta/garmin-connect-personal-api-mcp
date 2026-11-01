@@ -28,6 +28,12 @@ export function speedToPace(metersPerSecond: Maybe): string | null {
   return formatMinutesSeconds(1000 / metersPerSecond);
 }
 
+/** Swimming pace in min/100 m as "m:ss" from speed in m/s. */
+export function speedToPacePer100m(metersPerSecond: Maybe): string | null {
+  if (!isFiniteNumber(metersPerSecond) || metersPerSecond <= 0) return null;
+  return formatMinutesSeconds(100 / metersPerSecond);
+}
+
 /** Pace in min/km as "m:ss" from a duration in seconds per kilometre. */
 export function secondsPerKmToPace(seconds: Maybe): string | null {
   return isFiniteNumber(seconds) && seconds > 0 ? formatMinutesSeconds(seconds) : null;

@@ -128,6 +128,29 @@ export function toLocalIso(date: Date, timeZone: string): string {
   return `${get('year')}-${get('month')}-${get('day')}T${get('hour')}:${get('minute')}:${get('second')}${offset}`;
 }
 
+/**
+ * ISO 8601 from a Garmin local + GMT pair (activities), e.g. "2026-10-30T16:38:17+02:00".
+ * The offset is the difference between the two, so it reflects where the activity was
+ * recorded rather than the profile time zone. Falls back to the local time without an
+ * offset if the GMT value is missing.
+ */
+export function localIsoFromPair(
+  local: string | null | undefined,
+  gmt: string | null | undefined,
+): string | null {
+  const localDate = parseGarminGmt(local); // local wall time, parsed as if UTC
+  if (!localDate) return null;
+  const wallTime = localDate.toISOString().slice(0, 19);
+  const gmtDate = parseGarminGmt(gmt);
+  if (!gmtDate) return wallTime;
+  const offsetMinutes = Math.round((localDate.getTime() - gmtDate.getTime()) / 60_000);
+  const sign = offsetMinutes < 0 ? '-' : '+';
+  const abs = Math.abs(offsetMinutes);
+  const hh = String(Math.floor(abs / 60)).padStart(2, '0');
+  const mm = String(abs % 60).padStart(2, '0');
+  return `${wallTime}${sign}${hh}:${mm}`;
+}
+
 /** Convenience: Garmin GMT value → local ISO string, or null. */
 export function garminGmtToLocalIso(
   value: string | number | null | undefined,

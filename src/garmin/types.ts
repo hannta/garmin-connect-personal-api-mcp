@@ -78,7 +78,10 @@ export interface DailySleep {
   avgHeartRate?: N;
   avgSleepStress?: N;
   averageRespirationValue?: N;
+  averageSpO2Value?: N;
+  lowestSpO2Value?: N;
   sleepScoreFeedback?: S;
+  sleepScoreInsight?: S;
   sleepScores?: Partial<
     Record<
       | 'overall'
@@ -138,12 +141,15 @@ export interface ActivitySummary {
   duration?: N;
   movingDuration?: N;
   elevationGain?: N;
+  elevationLoss?: N;
   averageSpeed?: N;
   avgGradeAdjustedSpeed?: N;
   averageHR?: N;
   maxHR?: N;
+  calories?: N;
   averageRunningCadenceInStepsPerMinute?: N;
   avgPower?: N;
+  normPower?: N;
   aerobicTrainingEffect?: N;
   anaerobicTrainingEffect?: N;
   trainingEffectLabel?: S;
@@ -155,6 +161,11 @@ export interface ActivitySummary {
   hrTimeInZone_3?: N;
   hrTimeInZone_4?: N;
   hrTimeInZone_5?: N;
+  powerTimeInZone_1?: N;
+  powerTimeInZone_2?: N;
+  powerTimeInZone_3?: N;
+  powerTimeInZone_4?: N;
+  powerTimeInZone_5?: N;
   differenceBodyBattery?: N;
   lapCount?: N;
   fastestSplit_1000?: N;
@@ -206,6 +217,7 @@ export interface ActivityDetail {
     averageRunCadence?: N;
     averagePower?: N;
     normalizedPower?: N;
+    maxPower?: N;
     groundContactTime?: N;
     strideLength?: N;
     verticalOscillation?: N;
@@ -219,6 +231,11 @@ export interface ActivityDetail {
     moderateIntensityMinutes?: N;
     vigorousIntensityMinutes?: N;
     differenceBodyBattery?: N;
+    averageTemperature?: N;
+    avgRespirationRate?: N;
+    beginPotentialStamina?: N;
+    endPotentialStamina?: N;
+    minAvailableStamina?: N;
   } | null;
   splitSummaries?: SplitSummary[] | null;
 }

@@ -84,9 +84,9 @@ Garmin Connect Personal API
 - `zod` for tool input schemas
 - `@garmin/fitsdk` + `fflate` for FIT activity files — only for the optional
   `ENABLE_FIT_LAPS` feature, added later
-- `vitest` 5 for tests. Phase 1 code runs in Node; Worker-level integration tests in
-  Phase 2 use `@cloudflare/vitest-plugin` (`@cloudflare/vitest-pool-workers` is
-  deprecated)
+- `vitest` 5 for tests. Phase 1–2 code runs in Node (MCP via the client SDK and the
+  Worker's `fetch`); Worker-runtime tests in Phase 3 use `@cloudflare/vitest-plugin`
+  (`@cloudflare/vitest-pool-workers` is deprecated)
 - npm as the package manager
 - ESLint + Prettier, GitHub Actions CI
 - Repository: [hannta/garmin-connect-personal-api-mcp](https://github.com/hannta/garmin-connect-personal-api-mcp)
@@ -310,24 +310,38 @@ Findings: [discovery/FINDINGS.md](discovery/FINDINGS.md).
 - [x] Endpoint functions + unit tests against fixtures
 - [x] `lib/units.ts` and `lib/dates.ts` with tests (midnight, DST, Garmin timestamp formats)
 - [x] Local script: `npm run today`
-- [ ] CI workflow: typecheck, lint, format check, test (written; green once pushed)
+- [x] CI workflow: types check, typecheck, lint, format check, test
 
 **Done when:** CI is green and a local script prints today's recovery data.
 
 ### Phase 2 — MCP server (no auth yet)
 
-- [ ] Worker entry: `export default { fetch }` calling `createMcpHandler(createServer)`
+- [x] Worker entry: `export default { fetch }` calling `createMcpHandler(createServer)`
       at `/mcp`, with a server factory (never a shared server instance)
-- [ ] Set `legacy: "reject"` if Claude works with stateless-only; otherwise keep the
-      default legacy-compatible mode
-- [ ] First-release basic tools: `garmin_search_activities`, `garmin_get_activity`
+- [x] Keep the default legacy-compatible mode (`legacy: "stateless"`): Claude's support
+      for the 2026-07-28 stateless-only protocol is unconfirmed; revisit in Phase 4
+- [x] First-release basic tools: `garmin_search_activities`, `garmin_get_activity`
       (incl. interval totals), `garmin_get_sleep`, `garmin_get_hrv`, `garmin_get_profile`
-- [ ] Combined tool: `garmin_get_day`
-- [ ] Privacy filters (no precise GPS by default)
-- [ ] Test locally with `wrangler dev` + MCP Inspector
+- [x] Combined tool: `garmin_get_day`
+- [x] Privacy filters: every formatter whitelists its fields, so coordinates, location
+      names and owner details never reach the output (tested)
+- [x] Until OAuth exists, `/mcp` answers only on localhost (403 elsewhere)
+- [x] Tested locally with `wrangler dev` against real data (MCP JSON-RPC over HTTP), and
+      in CI through the MCP client SDK and the Worker's `fetch` handler in Node
+- [ ] Optional: check with MCP Inspector by hand
 
-**Done when:** Inspector lists the six first-release tools and all of them return real
-data.
+Notes:
+
+- Activity times use the activity's own offset (Garmin local vs. GMT start time), so a
+  race abroad shows its local start time. Daily data uses the profile time zone.
+- `garmin_get_activity` also reads activity search for that date, because time in HR and
+  power zones is only available there (two Garmin calls per activity).
+- Measured in Node: ~0.5 ms CPU per warm request; bundle 225 KB gzipped.
+- `compatibility_date` is 2026-10-30, the newest the local workerd supports.
+- Worker-runtime tests with `@cloudflare/vitest-plugin` move to Phase 3, where OAuth
+  wiring needs them; Phase 2's handler runs fine in Node.
+
+**Done when:** the six first-release tools are listed and all of them return real data. ✅
 
 ### Phase 3 — OAuth + lockdown
 
@@ -457,3 +471,10 @@ Built one at a time after the first release is in daily use, in this order:
 - **Language (2026-11-01):** English for tool names, descriptions, output, errors and docs.
 - **Repository (2026-11-01):** `git@github.com:hannta/garmin-connect-personal-api-mcp.git`,
   private until Phase 6.
+- **Activity times (2026-11-01):** activities use their own local time and offset
+  (from Garmin's local + GMT start times), not the profile time zone. The Garmin account
+  time zone stays `Europe/Athens`: Garmin offers no Helsinki option, and the two are
+  identical all year.
+- **Types file (2026-11-01):** `worker-configuration.d.ts` is committed and generated from
+  `.dev.vars.example` (`npm run types`), so it's the same on every machine; CI runs
+  `wrangler types --check`.

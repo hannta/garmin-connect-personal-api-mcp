@@ -5,6 +5,7 @@ import {
   daysInclusive,
   garminGmtToLocalIso,
   isValidTimeZone,
+  localIsoFromPair,
   parseGarminGmt,
   parseIsoDate,
   resolveTimeZone,
@@ -116,5 +117,24 @@ describe('local ISO output', () => {
       '2026-10-30T16:38:17+02:00',
     );
     expect(garminGmtToLocalIso(undefined, 'Europe/Helsinki')).toBeNull();
+  });
+});
+
+describe('localIsoFromPair', () => {
+  it('derives the offset from Garmin local + GMT times', () => {
+    expect(localIsoFromPair('2026-10-30 16:38:17', '2026-10-30 14:38:17')).toBe(
+      '2026-10-30T16:38:17+02:00',
+    );
+    expect(localIsoFromPair('2026-07-01T06:00:00.0', '2026-07-01T10:00:00.0')).toBe(
+      '2026-07-01T06:00:00-04:00',
+    );
+    expect(localIsoFromPair('2026-03-01 10:00:00', '2026-03-01 04:30:00')).toBe(
+      '2026-03-01T10:00:00+05:30',
+    );
+  });
+
+  it('falls back to wall time without GMT, and null without local time', () => {
+    expect(localIsoFromPair('2026-10-30 16:38:17', null)).toBe('2026-10-30T16:38:17');
+    expect(localIsoFromPair(undefined, '2026-10-30 14:38:17')).toBeNull();
   });
 });

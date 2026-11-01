@@ -60,6 +60,25 @@ export function mockFetch(responders: Responder[], options: { tokenStatus?: numb
   };
 }
 
+/** Like mockFetch, but answers data requests by path prefix, so call order doesn't matter. */
+export function routedFetch(
+  routes: Record<string, Responder>,
+  options: { tokenStatus?: number } = {},
+) {
+  const route: Responder = (call) => {
+    const match = Object.keys(routes)
+      .filter((prefix) => call.url.pathname.startsWith(prefix))
+      .sort((a, b) => b.length - a.length)[0];
+    const responder = match ? routes[match] : undefined;
+    if (!responder) return json({ message: 'not found' }, 404);
+    return responder(call);
+  };
+  return mockFetch(
+    Array.from({ length: 50 }, () => route),
+    options,
+  );
+}
+
 export function json(body: unknown, status = 200, headers: Record<string, string> = {}): Response {
   return new Response(JSON.stringify(body), {
     status,

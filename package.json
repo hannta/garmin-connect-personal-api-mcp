@@ -43,6 +43,7 @@
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",
+    "@modelcontextprotocol/client": "2.4.0",
     "@types/node": "24.19.2",
     "eslint": "10.14.0",
     "eslint-config-prettier": "10.1.8",
@@ -56,5 +57,10 @@
   "allowScripts": {
     "esbuild@0.28.2": true,
     "workerd@1.20261023.1": true
+  },
+  "dependencies": {
+    "@modelcontextprotocol/server": "2.4.0",
+    "agents": "0.32.0",
+    "zod": "4.6.7"
   }
 }
