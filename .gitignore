@@ -1,0 +1,21 @@
+# Local secrets — never commit
+.dev.vars
+.dev.vars.*
+!.dev.vars.example
+.env
+.env.*
+!.env.example
+
+# Real Garmin API responses from Phase 0 discovery (personal health data)
+discovery/raw/
+
+# Dependencies and build output
+node_modules/
+dist/
+coverage/
+.wrangler/
+
+# OS / editor
+.DS_Store
+.vscode/
+.idea/

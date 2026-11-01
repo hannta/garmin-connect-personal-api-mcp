@@ -1,0 +1,11 @@
+# Copy to .dev.vars for local development (.dev.vars is git-ignored).
+# In production, set each value with: npx wrangler secret put <NAME>
+
+# Garmin Connect Personal API key (Garmin Connect → Personal API Key page)
+GARMIN_API_KEY=your-key-here
+
+# Login passphrase for the MCP connector — generate with: openssl rand -base64 32
+OWNER_PASSPHRASE=
+
+# Signs the login form's CSRF cookie — generate with: openssl rand -base64 32
+COOKIE_ENCRYPTION_KEY=
