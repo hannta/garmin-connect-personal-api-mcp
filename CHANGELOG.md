@@ -17,3 +17,12 @@ All notable changes are documented here. The project follows
   read-only tools: `garmin_get_day`, `garmin_search_activities`, `garmin_get_activity`,
   `garmin_get_sleep`, `garmin_get_hrv`, `garmin_get_profile`
 - Deployment guide: [docs/DEPLOY.md](docs/DEPLOY.md)
+- Range tools: `garmin_get_days`, `garmin_get_daily_summaries`,
+  `garmin_get_sleep_summaries`, `garmin_get_hrv_summaries`, `garmin_get_weight`, with a
+  7-day default, one Garmin request per source and `summary` statistics
+- `garmin_get_activity_streams`: Garmin-downsampled time series for one activity
+- `garmin_search_activities`: weekly totals (`group_by: "week"`) and fastest splits
+
+### Changed
+
+- Activity rows leave out distance and pace for activities without distance

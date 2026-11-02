@@ -1,0 +1,128 @@
+[
+  {
+    "calendarDate": "2026-02-28",
+    "sleepTimeSeconds": null
+  },
+  {
+    "id": 1772315999999,
+    "userProfilePK": 1,
+    "calendarDate": "2026-03-01",
+    "sleepTimeSeconds": 24000,
+    "napTimeSeconds": 0,
+    "sleepWindowConfirmed": true,
+    "sleepStartTimestampGMT": 1772313000000,
+    "sleepEndTimestampGMT": 1772340600000,
+    "sleepStartTimestampLocal": 1772406600000,
+    "sleepEndTimestampLocal": 1772434200000,
+    "unmeasurableSleepSeconds": 0,
+    "deepSleepSeconds": 5400,
+    "lightSleepSeconds": 14400,
+    "remSleepSeconds": 6300,
+    "awakeSleepSeconds": 1500,
+    "averageRespirationValue": 14.0,
+    "lowestRespirationValue": 9.0,
+    "highestRespirationValue": 19.0,
+    "awakeCount": 2,
+    "avgSleepStress": 15.0,
+    "avgHeartRate": 52.0,
+    "sleepScoreFeedback": "POSITIVE_DEEP",
+    "sleepScoreInsight": "NONE",
+    "sleepScores": {
+      "overall": {
+        "value": 81,
+        "qualifierKey": "GOOD"
+      },
+      "totalDuration": {
+        "qualifierKey": "GOOD"
+      },
+      "stress": {
+        "qualifierKey": "GOOD"
+      },
+      "awakeCount": {
+        "qualifierKey": "FAIR"
+      },
+      "restlessness": {
+        "qualifierKey": "GOOD"
+      },
+      "remPercentage": {
+        "value": 24,
+        "qualifierKey": "EXCELLENT"
+      },
+      "lightPercentage": {
+        "value": 55,
+        "qualifierKey": "EXCELLENT"
+      },
+      "deepPercentage": {
+        "value": 21,
+        "qualifierKey": "EXCELLENT"
+      }
+    },
+    "sleepNeed": {
+      "calendarDate": "2026-03-02",
+      "baseline": 480,
+      "actual": 500,
+      "feedback": "INCREASED"
+    }
+  },
+  {
+    "id": 1772316000000,
+    "userProfilePK": 1,
+    "calendarDate": "2026-03-02",
+    "sleepTimeSeconds": 26100,
+    "napTimeSeconds": 0,
+    "sleepWindowConfirmed": true,
+    "sleepStartTimestampGMT": 1772399400000,
+    "sleepEndTimestampGMT": 1772427000000,
+    "sleepStartTimestampLocal": 1772406600000,
+    "sleepEndTimestampLocal": 1772434200000,
+    "unmeasurableSleepSeconds": 0,
+    "deepSleepSeconds": 5400,
+    "lightSleepSeconds": 14400,
+    "remSleepSeconds": 6300,
+    "awakeSleepSeconds": 1500,
+    "averageRespirationValue": 14.0,
+    "lowestRespirationValue": 9.0,
+    "highestRespirationValue": 19.0,
+    "awakeCount": 2,
+    "avgSleepStress": 15.0,
+    "avgHeartRate": 52.0,
+    "sleepScoreFeedback": "POSITIVE_DEEP",
+    "sleepScoreInsight": "NONE",
+    "sleepScores": {
+      "overall": {
+        "value": 81,
+        "qualifierKey": "GOOD"
+      },
+      "totalDuration": {
+        "qualifierKey": "GOOD"
+      },
+      "stress": {
+        "qualifierKey": "GOOD"
+      },
+      "awakeCount": {
+        "qualifierKey": "FAIR"
+      },
+      "restlessness": {
+        "qualifierKey": "GOOD"
+      },
+      "remPercentage": {
+        "value": 24,
+        "qualifierKey": "EXCELLENT"
+      },
+      "lightPercentage": {
+        "value": 55,
+        "qualifierKey": "EXCELLENT"
+      },
+      "deepPercentage": {
+        "value": 21,
+        "qualifierKey": "EXCELLENT"
+      }
+    },
+    "sleepNeed": {
+      "calendarDate": "2026-03-02",
+      "baseline": 480,
+      "actual": 500,
+      "feedback": "INCREASED"
+    }
+  }
+]

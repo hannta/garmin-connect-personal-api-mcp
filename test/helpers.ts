@@ -1,8 +1,10 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { expect } from 'vitest';
 import { GarminClient } from '../src/garmin/client';
 import { MemoryStore } from '../src/garmin/store';
 import { TokenProvider } from '../src/garmin/token';
+import { createToolContext } from '../src/tools/context';
 
 export const TEST_KEY = 'test-api-key-not-real';
 export const NOW_MS = Date.UTC(2026, 2, 2, 8, 0, 0);
@@ -90,4 +92,42 @@ export function makeClient(fetchFn: typeof fetch, store = new MemoryStore(() => 
   const tokens = new TokenProvider({ apiKey: TEST_KEY, store, fetch: fetchFn, now: () => NOW_MS });
   const client = new GarminClient({ tokens, fetch: fetchFn, sleep: () => Promise.resolve() });
   return { client, tokens, store };
+}
+
+export const PROFILE_PATH = '/userprofile-service/userprofile/settings';
+
+/**
+ * A tool context on a routed Garmin mock; the profile route answers with the fixture
+ * (Helsinki, weeks starting Monday). Today is 2026-03-02.
+ */
+export function toolSetup(
+  routes: Parameters<typeof routedFetch>[0],
+  options: { timeZone?: string; store?: MemoryStore } = {},
+) {
+  const store = options.store ?? new MemoryStore(() => NOW_MS);
+  const mock = routedFetch({
+    [PROFILE_PATH]: () => json(fixture('profile-settings.json')),
+    ...routes,
+  });
+  const { client } = makeClient(mock.fetch, store);
+  const context = createToolContext({
+    client: () => client,
+    store,
+    timeZoneOverride: options.timeZone,
+    now: () => new Date(NOW_MS), // 2026-03-02 10:00 in Helsinki
+  });
+  const paths = () => mock.dataCalls().map((call) => call.url.pathname);
+  const query = (prefix: string) =>
+    Object.fromEntries(
+      mock.dataCalls().find((call) => call.url.pathname.startsWith(prefix))?.url.searchParams ?? [],
+    );
+  return { context, paths, query, store };
+}
+
+/** Garmin's location and owner fields must never appear in tool output. */
+export function expectNoPrivateFields(output: unknown) {
+  const text = JSON.stringify(output);
+  for (const key of ['Latitude', 'Longitude', 'locationName', 'owner', 'displayName']) {
+    expect(text).not.toContain(key);
+  }
 }

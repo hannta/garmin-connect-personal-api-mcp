@@ -5,7 +5,7 @@ import { formatHoursMinutes, round } from '../lib/units';
 import { dateInput, defineTool } from './define';
 import { activityRow } from './format';
 import { hasSleepData } from './get-sleep';
-import { errorMessage } from './result';
+import { settledValue, settledWarning } from './result';
 
 export const getDayTool = defineTool({
   name: 'garmin_get_day',
@@ -39,34 +39,25 @@ export const getDayTool = defineTool({
 
     const warnings = [
       zone.warning,
-      failure('Daily summary', summaries),
-      failure('Sleep', sleep),
-      failure('HRV', hrv),
-      failure('Activities', activities),
+      settledWarning('Daily summary', summaries),
+      settledWarning('Sleep', sleep),
+      settledWarning('HRV', hrv),
+      settledWarning('Activities', activities),
     ].filter((warning): warning is string => Boolean(warning));
 
     return formatDay(
       date,
       zone.timeZone,
       {
-        summary: value(summaries)?.[0],
-        sleep: value(sleep),
-        hrv: value(hrv),
-        activities: value(activities),
+        summary: settledValue(summaries)?.[0],
+        sleep: settledValue(sleep),
+        hrv: settledValue(hrv),
+        activities: settledValue(activities),
       },
       warnings,
     );
   },
 });
-
-function value<T>(result: PromiseSettledResult<T>): T | undefined {
-  return result.status === 'fulfilled' ? result.value : undefined;
-}
-
-function failure(what: string, result: PromiseSettledResult<unknown>): string | undefined {
-  if (result.status === 'fulfilled') return undefined;
-  return `${what} unavailable: ${errorMessage(result.reason)}`;
-}
 
 export interface DayData {
   summary?: DailySummary | undefined;

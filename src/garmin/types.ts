@@ -247,3 +247,30 @@ export interface ActivityStreams {
   activityDetailMetrics?: { metrics: (number | null)[] }[] | null;
   detailsAvailable?: boolean | null;
 }
+
+/** Weights in grams; percentages as numbers. */
+export interface WeightMeasurement {
+  calendarDate?: S;
+  weight?: N;
+  bmi?: N;
+  bodyFat?: N;
+  bodyWater?: N;
+  boneMass?: N;
+  muscleMass?: N;
+  visceralFat?: N;
+  sourceType?: S;
+}
+
+export interface DailyWeightSummary {
+  summaryDate: string;
+  numOfWeightEntries?: N;
+  minWeight?: N;
+  maxWeight?: N;
+  latestWeight?: WeightMeasurement | null;
+}
+
+export interface WeightRangeResponse {
+  dailyWeightSummaries?: DailyWeightSummary[] | null;
+  totalAverage?: WeightMeasurement | null;
+  previousDateWeight?: WeightMeasurement | null;
+}

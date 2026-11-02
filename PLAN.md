@@ -20,18 +20,18 @@ Garmin is where watch data originates; Strava receives a copy. Garmin therefore 
 same activity data and more (running dynamics, training effect, full FIT channels).
 What Strava adds is its own derived metrics and social features.
 
-| Strava MCP capability                        | This server                                                                                             |
-| -------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
-| List / search activities                     | ✅ `garmin_search_activities`                                                                           |
-| Activity performance, zones                  | ✅ `garmin_get_activity` (plus running dynamics, power, training effect, RPE, interval totals)          |
-| Per-lap splits                               | ⚠️ Only from FIT files — optional `ENABLE_FIT_LAPS` (needs Workers Paid for long runs)                  |
-| Activity streams                             | ✅ `garmin_get_activity_streams` (later release; Garmin-downsampled `/details`, no FIT)                 |
-| Athlete zones, profile                       | ✅ `garmin_get_profile`                                                                                 |
-| Best efforts                                 | ✅ `garmin_get_best_efforts` (later release; from per-activity `fastestSplit_*` fields, no PR endpoint) |
-| Streaks, fitness / freshness                 | ✅ `garmin_get_training_summary` (later release; Garmin training load, HR-zone time, volume)            |
-| Strength workout details                     | ❌ Not available (no sets endpoint; FIT sets not recorded by the device)                                |
-| Gear / shoe mileage                          | ❌ No gear endpoint in the Personal API                                                                 |
-| Training plans, segments, KOMs, kudos, clubs | ❌ Strava-only; not needed for coaching                                                                 |
+| Strava MCP capability                        | This server                                                                                            |
+| -------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| List / search activities                     | ✅ `garmin_search_activities`                                                                          |
+| Activity performance, zones                  | ✅ `garmin_get_activity` (plus running dynamics, power, training effect, RPE, interval totals)         |
+| Per-lap splits                               | ⚠️ Only from FIT files — optional `ENABLE_FIT_LAPS` (needs Workers Paid for long runs)                 |
+| Activity streams                             | ✅ `garmin_get_activity_streams` (later release; Garmin-downsampled `/details`, no FIT)                |
+| Athlete zones, profile                       | ✅ `garmin_get_profile`                                                                                |
+| Best efforts                                 | ✅ Fastest splits (1 km … marathon) in `garmin_search_activities` rows (later release; no PR endpoint) |
+| Streaks, fitness / freshness                 | ✅ Weekly totals with `group_by: "week"` (later release; Garmin training load, HR-zone time, volume)   |
+| Strength workout details                     | ❌ Not available (no sets endpoint; FIT sets not recorded by the device)                               |
+| Gear / shoe mileage                          | ❌ No gear endpoint in the Personal API                                                                |
+| Training plans, segments, KOMs, kudos, clubs | ❌ Strava-only; not needed for coaching                                                                |
 
 ### Principles
 
@@ -196,7 +196,13 @@ written so Claude picks the right one. Internally, `garmin/endpoints.ts` covers 
 Personal API endpoint; tools are built on top of it.
 
 The tools are released in stages: first a small set of basic tools plus one combined
-day view, then calculated tools once the basics are in daily use.
+day view, then range tools for trends.
+
+Tools follow Garmin's data: one tool per kind of data (mirroring a Personal API
+endpoint), plus a few merged tools that join endpoints Claude would otherwise call
+together, like `garmin_get_day`. Claude (or any agent) pulls what it needs and does the
+analysis itself; the server doesn't compute scores or interpret the data. Output stays
+compact and metric (see Units) rather than raw Garmin JSON.
 
 ### Naming conventions
 
@@ -204,7 +210,7 @@ day view, then calculated tools once the basics are in daily use.
   distinguishable from other connectors (e.g. Strava's `search_activities`)
 - `search_` for filtered lists, `get_` for everything else
 - Singular for one item (`garmin_get_activity`), plural / summary words for ranges
-  (`garmin_search_activities`, `garmin_get_training_summary`)
+  (`garmin_search_activities`, `garmin_get_sleep_summaries`, `garmin_get_days`)
 - Basic tools use the same names and scope as other Garmin MCP servers
 
 ### First release — 5 basic tools + 1 combined
@@ -221,18 +227,41 @@ The basic tools give depth that `garmin_get_day` doesn't, so they don't overlap.
 | `garmin_get_day(date?)` — **combined**        | "Should I do intervals today?" (call for yesterday + today)    | Sleep summary, HRV summary, Body Battery, stress, resting HR, intensity minutes, plus a compact list of that day's activities. Partial data with warnings if one source fails                                                                                                                                                                           |
 
 `garmin_get_day`'s description points to `garmin_get_activity`, `garmin_get_sleep` and
-`garmin_get_hrv` for detail beyond the summary. Until `garmin_get_recovery_trend`
-exists, Claude can call `garmin_get_day` for consecutive days.
+`garmin_get_hrv` for detail beyond the summary, and to `garmin_get_days` for ranges.
 
-### Later releases — calculated tools (no FIT needed)
+### Later releases — range tools
 
-| Tool                                                  | Answers questions like                     | Garmin data                                                                                                                                                   |
-| ----------------------------------------------------- | ------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `garmin_get_recovery_trend(days)`                     | "Am I absorbing this training block?"      | HRV, sleep and resting HR over time, 7-day averages, deviation from baseline                                                                                  |
-| `garmin_get_training_summary(weeks)`                  | "How has my volume built over this block?" | From activity search: weekly distance, time, elevation, run count, long run, Garmin training load, time in HR zones, intensity minutes, week-over-week change |
-| `garmin_get_activity_streams(id, channels?, points?)` | "Did my HR drift in the last 10 km?"       | `/activity/{id}/details?maxChartSize=N` — Garmin-downsampled HR, pace, grade-adjusted pace, power, cadence, elevation, dynamics, stamina; location stripped   |
-| `garmin_get_best_efforts(distances?, range?)`         | "What's my fastest 10k this year?"         | Minimum of per-activity `fastestSplit_1000` … `_42195` from activity search over the range                                                                    |
-| `garmin_get_health_metrics(range)`                    | "How is my weight trending?"               | Weight, SpO2, steps, hydration, menstrual cycle phase (optional, only if tracked)                                                                             |
+**Range rules** (all range tools):
+
+- `start_date` / `end_date`, `YYYY-MM-DD` in the user's time zone. Neither given: the 7
+  days ending today. Only one given: a 7-day range from or to it.
+- **One Garmin request per source.** A range is fetched with Garmin's range endpoint in
+  a single request — never one request per day. Merged tools make one request per source.
+- **Longer than one request allows → error, not splitting.** The error names the
+  maximum, e.g. "Sleep summaries cover at most 31 nights per call; split the range."
+  Claude makes the extra calls itself, so one tool call is always one Garmin request
+  per source. Activity lists page with `next_offset` instead.
+- Each result has the rows plus a `summary` of plain statistics per metric: average,
+  min, max and days with data. No scores, baselines of our own or interpretation.
+
+| Tool                                                       | Answers questions like                                              | Garmin data (max range per call)                                                                                                                                                                                                     |
+| ---------------------------------------------------------- | ------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `garmin_get_daily_summaries(start?, end?)`                 | "How has my resting HR moved this month?"                           | `/usersummary-service/v2/dailysummaries` — resting / min / max HR, Body Battery, stress, intensity minutes, steps, respiration per day (92 days)                                                                                     |
+| `garmin_get_sleep_summaries(start?, end?)`                 | "Has my sleep been shorter this block?"                             | `/sleep-service/sleep/dailySleepSummariesByDate` — per night (wake-up date): duration, stages, score, sleep need, HR, respiration, sleep stress (31 nights)                                                                          |
+| `garmin_get_hrv_summaries(start?, end?)`                   | "Is my HRV trending down?"                                          | `/hrv-service/hrv/daily/{start}/{end}` — per night: average, 5-min high, weekly average, baseline range, status (92 days)                                                                                                            |
+| `garmin_get_weight(start?, end?)`                          | "How is my weight trending?"                                        | `/weight-service/weight/range/{start}/{end}` — daily weight and body composition, in kg (366 days: weigh-ins are sparse, so a year stays small)                                                                                      |
+| `garmin_get_days(start?, end?)` — **merged**               | "Am I absorbing this training block?"                               | `garmin_get_day` over a range: daily summaries + sleep + HRV + per-day activity totals (count, minutes, km, training load) joined into one row per day (31 days, the sleep limit); four requests in total                            |
+| `garmin_search_activities(…, group_by?)` — **new options** | "How has my volume built over 12 weeks?" / "Fastest 10k this year?" | `group_by: "week"` returns totals per week (first day from the profile): distance, time, elevation, count, longest, training load, time in HR zones. Rows also get fastest splits (1 km, mile, 5k, 10k, half, marathon) when present |
+| `garmin_get_activity_streams(id, channels?, points?)`      | "Did my HR drift in the last 10 km?"                                | `/activity/{id}/details?maxChartSize=N` — Garmin-downsampled HR, pace, grade-adjusted pace, power, cadence, elevation, dynamics, stamina; location stripped                                                                          |
+
+The 92-day maximums keep one response a reasonable size on the phone (Garmin itself
+allows more; 92 nights of HRV is ~14k characters); the 31-night sleep limit is Garmin's. `group_by: "week"` works on one
+page of up to 100 activities; a range with more returns an error asking for a shorter
+range. `garmin_get_sleep` and `garmin_get_hrv` stay single-night tools for full detail.
+
+**Left to Claude, from the rows:** recovery and load trends, acute vs. chronic load,
+week-over-week change, easy-run efficiency (pace vs. HR), period comparisons. Not
+planned as tools.
 
 **Optional later feature:** per-lap rows in `garmin_get_activity` from FIT files, behind
 `ENABLE_FIT_LAPS` (see below).
@@ -246,8 +275,8 @@ exists, Claude can call `garmin_get_day` for consecutive days.
 
 **Known gaps (confirmed in Phase 0), documented in the README:**
 
-- No Training Readiness, Training Status or VO2max. Readiness is left for Claude to
-  estimate from HRV, sleep and load — clearly labelled as an estimate.
+- No Training Readiness, Training Status or VO2max (fitness age exists, but its
+  components are resting HR, BMI and vigorous minutes — no VO2max).
 - No gear endpoint, so no shoe mileage.
 - No personal-records endpoint; best efforts come from per-activity fastest splits and
   may differ slightly from Garmin's own PRs.
@@ -392,17 +421,22 @@ passphrase forces a new sign-in. ✅
 - [x] Write `docs/DEPLOY.md` from the real steps taken
 
 **Done when:** Claude on the phone answers coaching questions using only this connector's
-first-release tools (training load trends come in Phase 5).
+first-release tools (range tools come in Phase 5).
 
 ### Phase 5 — Later-release tools
 
-Built one at a time after the first release is in daily use, in this order:
+Built one at a time after the first release is in daily use, in this order (range
+rules in Tools → Later releases):
 
-- [ ] `garmin_get_recovery_trend`
-- [ ] `garmin_get_training_summary`
-- [ ] `garmin_get_activity_streams` (from `/details`, capped point count)
-- [ ] `garmin_get_best_efforts` (from activity-search fastest splits)
-- [ ] `garmin_get_health_metrics`
+- [x] Shared range handling: default 7 days, per-endpoint maximum with a clear error,
+      `summary` statistics
+- [x] `garmin_get_daily_summaries`
+- [x] `garmin_get_sleep_summaries`
+- [x] `garmin_get_hrv_summaries`
+- [x] `garmin_get_days` (merged: one row per day from the three above)
+- [x] `garmin_search_activities`: `group_by: "week"` and fastest splits in rows
+- [x] `garmin_get_weight`
+- [x] `garmin_get_activity_streams` (from `/details`, capped point count)
 - [ ] Optional: `ENABLE_FIT_LAPS` — per-lap and per-rep interval rows in
       `garmin_get_activity` from FIT laps / splits,
       decoded once and cached in KV; off by default; documented as needing Workers Paid
@@ -500,5 +534,19 @@ Built one at a time after the first release is in daily use, in this order:
 - **OAuth shape (2026-11-02):** one Worker with the combined `OAuthProvider`, not the
   library's recommended split Workers: a single Worker keeps self-hosting and the Deploy
   button simple, and the combined shape remains fully supported.
+- **Tools mirror Garmin's data (2026-11-02):** supersedes "calculated tools" and the
+  earlier rejection of mirroring endpoints. One tool per kind of Garmin data plus a few
+  merged tools (`garmin_get_day`, `garmin_get_days`); Claude does the analysis. Closest
+  projects ([trainingload-ai/garmin-personal-api-mcp](https://github.com/trainingload-ai/garmin-personal-api-mcp),
+  [Mason-Levyy/garmin-personal-mcp](https://github.com/Mason-Levyy/garmin-personal-mcp))
+  also mirror endpoints (~25 tools each, raw output, local only). Differences kept here:
+  compact metric output, plain `summary` statistics, and fewer tools — endpoints whose
+  data another tool already returns (steps, stress, Body Battery are in daily
+  summaries) get no tool of their own. Dropped: `garmin_get_recovery_trend`,
+  `garmin_get_training_summary`, `garmin_get_best_efforts`, `garmin_get_health_metrics`.
+  Not now: hydration, SpO2, fitness age, food log, menstrual cycle.
+- **Range calls (2026-11-02):** default 7 days; one Garmin request per source; a range
+  over the endpoint's maximum returns an error asking Claude to split it, instead of
+  the server splitting it.
 - **No cookie secret (2026-11-02):** `COOKIE_ENCRYPTION_KEY` dropped; the library's
   consent helpers provide CSRF protection.

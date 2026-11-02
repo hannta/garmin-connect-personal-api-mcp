@@ -12,6 +12,8 @@ import {
   toLocalIso,
   todayIn,
   validateRange,
+  weekStart,
+  weekdayIndex,
 } from '../src/lib/dates';
 
 describe('time zone resolution', () => {
@@ -136,5 +138,15 @@ describe('localIsoFromPair', () => {
   it('falls back to wall time without GMT, and null without local time', () => {
     expect(localIsoFromPair('2026-10-30 16:38:17', null)).toBe('2026-10-30T16:38:17');
     expect(localIsoFromPair(undefined, '2026-10-30 14:38:17')).toBeNull();
+  });
+});
+
+describe('weeks', () => {
+  it('finds the weekday and the start of the week', () => {
+    expect(weekdayIndex('2026-03-01')).toBe(0); // Sunday
+    expect(weekStart('2026-03-01', 1)).toBe('2026-02-23'); // Monday weeks
+    expect(weekStart('2026-03-02', 1)).toBe('2026-03-02');
+    expect(weekStart('2026-03-01', 0)).toBe('2026-03-01'); // Sunday weeks
+    expect(weekStart('2026-03-07', 0)).toBe('2026-03-01');
   });
 });

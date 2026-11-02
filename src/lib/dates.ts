@@ -75,6 +75,16 @@ export function addDays(date: string, days: number): string {
   return new Date(toUtcMidnight(date) + days * 86_400_000).toISOString().slice(0, 10);
 }
 
+/** Day of the week, 0 = Sunday … 6 = Saturday. */
+export function weekdayIndex(date: string): number {
+  return new Date(toUtcMidnight(date)).getUTCDay();
+}
+
+/** The first day of the week containing `date`, for weeks starting on `firstDay`. */
+export function weekStart(date: string, firstDay: number): string {
+  return addDays(date, -((weekdayIndex(date) - firstDay + 7) % 7));
+}
+
 export function daysInclusive(start: string, end: string): number {
   return Math.round((toUtcMidnight(end) - toUtcMidnight(start)) / 86_400_000) + 1;
 }

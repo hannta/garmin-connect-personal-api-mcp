@@ -8,21 +8,32 @@ A self-hosted, read-only [MCP](https://modelcontextprotocol.io) server that give
 data through the official **Garmin Connect Personal API**. It runs on your own
 Cloudflare account, so it works in the Claude web and mobile apps as a custom connector.
 
-**Status:** early development. The first six tools work end to end on Cloudflare;
-more tools come next. See [PLAN.md](PLAN.md).
+**Status:** early development. The daily and single-activity tools run on Cloudflare;
+the date-range tools are new. See [PLAN.md](PLAN.md).
 
 To run your own: [docs/DEPLOY.md](docs/DEPLOY.md).
 
 ## Tools
 
-| Tool                       | What it returns                                                                                  |
-| -------------------------- | ------------------------------------------------------------------------------------------------ |
-| `garmin_get_day`           | One day at a glance: sleep, HRV, Body Battery, stress, resting HR, intensity minutes, activities |
-| `garmin_search_activities` | Activities in a date range, with Garmin activity IDs                                             |
-| `garmin_get_activity`      | One activity in depth: pace, HR zones, running dynamics, power, training effect, interval totals |
-| `garmin_get_sleep`         | One night's sleep in detail                                                                      |
-| `garmin_get_hrv`           | One night's HRV with baseline and status                                                         |
-| `garmin_get_profile`       | Profile settings and heart-rate zones                                                            |
+| Tool                          | What it returns                                                                                  |
+| ----------------------------- | ------------------------------------------------------------------------------------------------ |
+| `garmin_get_day`              | One day at a glance: sleep, HRV, Body Battery, stress, resting HR, intensity minutes, activities |
+| `garmin_get_days`             | The same over a date range, one row per day, with daily activity totals and training load        |
+| `garmin_search_activities`    | Activities in a date range with Garmin IDs and fastest splits, or totals per week                |
+| `garmin_get_activity`         | One activity in depth: pace, HR zones, running dynamics, power, training effect, interval totals |
+| `garmin_get_activity_streams` | One activity's time series (HR, pace, grade-adjusted pace, cadence, power, elevation, …)         |
+| `garmin_get_sleep`            | One night's sleep in detail                                                                      |
+| `garmin_get_sleep_summaries`  | Sleep per night over a date range                                                                |
+| `garmin_get_hrv`              | One night's HRV with baseline, status and overnight readings                                     |
+| `garmin_get_hrv_summaries`    | HRV per night over a date range                                                                  |
+| `garmin_get_daily_summaries`  | Resting HR, Body Battery, stress, intensity minutes, steps per day over a date range             |
+| `garmin_get_weight`           | Weigh-ins and body composition over a date range                                                 |
+| `garmin_get_profile`          | Profile settings and heart-rate zones                                                            |
+
+Range tools default to the last 7 days and make one Garmin request per source. A range
+longer than one request allows (e.g. 31 nights of sleep) returns an error with the
+maximum, and Claude splits it into several calls. Range results include plain average /
+min / max statistics; the analysis is left to Claude.
 
 All output is metric (km, min/km, kg), with the unit in every field name. Dates are
 `YYYY-MM-DD` in your time zone (from your Garmin profile, or the `TIMEZONE` var);

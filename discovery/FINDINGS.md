@@ -61,6 +61,24 @@ temperature, respiration and `splitSummaries[]` grouped by type (`INTERVAL_WARMU
 `INTERVAL_ACTIVE`, `INTERVAL_RECOVERY`, `RWD_RUN`, `RWD_WALK`, `RWD_STAND`) with
 count and totals per type — but not one row per lap.
 
+## Range endpoints and limits (tested 2026-11-02)
+
+Found via the endpoint list of Garmin's Python client
+([garmin-connect-personal-api-python](https://pypi.org/project/garmin-connect-personal-api-python/)).
+
+| Endpoint                                                               | Largest range that worked                                                     | Over the limit |
+| ---------------------------------------------------------------------- | ----------------------------------------------------------------------------- | -------------- |
+| `GET /sleep-service/sleep/dailySleepSummariesByDate?startDate&endDate` | 31 nights; same fields as `dailySleep`                                        | 94 nights: 400 |
+| `GET /usersummary-service/v2/dailysummaries?startDate&endDate`         | 180 days                                                                      | 364 days: 500  |
+| `GET /hrv-service/hrv/daily/{start}/{end}`                             | 365 days                                                                      | —              |
+| `GET /activitylist-service/activities/search/activities?…&limit`       | 100 per page (~470 KB, < 1 ms to parse)                                       | 1000: 500      |
+| `GET /fitnessage-service/fitnessage/v2/{date}`                         | single date; components: resting HR, BMI, vigorous days / minutes — no VO2max | —              |
+
+Other endpoints in that client, not tested: steps, stress and hydration ranges
+(`/usersummary-service/stats/{steps,stress,hydration}/daily/{start}/{end}`), SpO2
+(`/wellness-service/wellness/daily/spo2acclimation/{date}`), wellness activities, weight
+goals, food logs, menstrual cycle.
+
 ## Activity details (streams) endpoint
 
 `/details?maxChartSize=100` returned 128 rows for a 3 900-record activity (server-side

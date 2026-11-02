@@ -1,0 +1,82 @@
+{
+  "activityId": 10000000004,
+  "measurementCount": 9,
+  "metricsCount": 3,
+  "metricDescriptors": [
+    {
+      "metricsIndex": 0,
+      "key": "sumDistance",
+      "unit": {
+        "key": "meter"
+      }
+    },
+    {
+      "metricsIndex": 1,
+      "key": "sumElapsedDuration",
+      "unit": {
+        "key": "second"
+      }
+    },
+    {
+      "metricsIndex": 2,
+      "key": "directHeartRate",
+      "unit": {
+        "key": "bpm"
+      }
+    },
+    {
+      "metricsIndex": 3,
+      "key": "directSpeed",
+      "unit": {
+        "key": "mps"
+      }
+    },
+    {
+      "metricsIndex": 4,
+      "key": "directGradeAdjustedSpeed",
+      "unit": {
+        "key": "mps"
+      }
+    },
+    {
+      "metricsIndex": 5,
+      "key": "directPower",
+      "unit": {
+        "key": "watt"
+      }
+    },
+    {
+      "metricsIndex": 6,
+      "key": "directLatitude",
+      "unit": {
+        "key": "dd"
+      }
+    },
+    {
+      "metricsIndex": 7,
+      "key": "directLongitude",
+      "unit": {
+        "key": "dd"
+      }
+    },
+    {
+      "metricsIndex": 8,
+      "key": "directDoubleCadence",
+      "unit": {
+        "key": "stepsPerMinute"
+      }
+    }
+  ],
+  "activityDetailMetrics": [
+    {
+      "metrics": [0.0, 0.0, 98.0, null, null, null, 60.0, 24.0, 0.0]
+    },
+    {
+      "metrics": [2500.0, 750.0, 141.0, 3.333, 3.4, null, 60.01, 24.01, 172.0]
+    },
+    {
+      "metrics": [5000.0, 1490.0, 150.0, 3.378, 3.31, null, 60.02, 24.02, 174.0]
+    }
+  ],
+  "detailsAvailable": true
+}

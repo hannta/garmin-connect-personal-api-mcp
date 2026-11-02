@@ -9,10 +9,16 @@ import { NOW_MS, TEST_KEY, fixture, json, routedFetch } from './helpers';
 
 const TOOL_NAMES = [
   'garmin_get_activity',
+  'garmin_get_activity_streams',
+  'garmin_get_daily_summaries',
   'garmin_get_day',
+  'garmin_get_days',
   'garmin_get_hrv',
+  'garmin_get_hrv_summaries',
   'garmin_get_profile',
   'garmin_get_sleep',
+  'garmin_get_sleep_summaries',
+  'garmin_get_weight',
   'garmin_search_activities',
 ];
 
@@ -68,7 +74,7 @@ describe('result helpers', () => {
 });
 
 describe('MCP server', () => {
-  it('lists the six read-only tools', async () => {
+  it('lists every tool as read-only', async () => {
     const client = await connect(testEnv());
     const { tools } = await client.listTools();
     expect(tools.map((tool) => tool.name).sort()).toEqual(TOOL_NAMES);

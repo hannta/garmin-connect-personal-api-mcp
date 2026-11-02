@@ -16,11 +16,15 @@ import type {
   HrvRangeResponse,
   HrvSummary,
   ProfileSettings,
+  WeightRangeResponse,
 } from './types';
 
+// Garmin's own per-request maximums (tested 2026-11-02); tools may allow less.
 export const LIMITS = {
-  dailySummaryDays: 365,
+  dailySummaryDays: 180,
   hrvRangeDays: 365,
+  sleepRangeDays: 31,
+  weightRangeDays: 366,
   activitySearchDays: 366,
   activitySearchMaxResults: 100,
   activitySearchDefaultResults: 20,
@@ -60,6 +64,34 @@ export async function getDailySummaries(
 export async function getSleep(client: GarminClient, date: string): Promise<DailySleep> {
   parseIsoDate(date);
   return client.getJson('/sleep-service/sleep/dailySleep', { date }, `sleep for ${date}`);
+}
+
+/** One entry per night (wake-up date), oldest first; same fields as `getSleep`. */
+export async function getSleepRange(
+  client: GarminClient,
+  start: string,
+  end: string,
+): Promise<DailySleep[]> {
+  validateRange(start, end, LIMITS.sleepRangeDays);
+  const response = await client.getJson<DailySleep[] | null>(
+    '/sleep-service/sleep/dailySleepSummariesByDate',
+    { startDate: start, endDate: end },
+    `sleep ${start} – ${end}`,
+  );
+  return Array.isArray(response) ? response : [];
+}
+
+export async function getWeightRange(
+  client: GarminClient,
+  start: string,
+  end: string,
+): Promise<WeightRangeResponse> {
+  validateRange(start, end, LIMITS.weightRangeDays);
+  return client.getJson(
+    `/weight-service/weight/range/${start}/${end}`,
+    {},
+    `weight ${start} – ${end}`,
+  );
 }
 
 export async function getHrv(client: GarminClient, date: string): Promise<HrvDay> {

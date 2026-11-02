@@ -1,45 +1,18 @@
 import { describe, expect, it } from 'vitest';
 import type { ActivitySummary } from '../src/garmin/types';
 import { MemoryStore } from '../src/garmin/store';
-import { createToolContext } from '../src/tools/context';
 import { getActivityTool } from '../src/tools/get-activity';
 import { getDayTool } from '../src/tools/get-day';
 import { getHrvTool } from '../src/tools/get-hrv';
 import { getProfileTool } from '../src/tools/get-profile';
 import { getSleepTool } from '../src/tools/get-sleep';
 import { searchActivitiesTool } from '../src/tools/search-activities';
-import { NOW_MS, fixture, json, makeClient, routedFetch } from './helpers';
+import { NOW_MS, PROFILE_PATH, expectNoPrivateFields, fixture, json, toolSetup } from './helpers';
 
-type Routes = Parameters<typeof routedFetch>[0];
-
-const PROFILE = '/userprofile-service/userprofile/settings';
+const PROFILE = PROFILE_PATH;
 const SEARCH = '/activitylist-service/activities/search/activities';
-
-function setup(routes: Routes, options: { timeZone?: string; store?: MemoryStore } = {}) {
-  const store = options.store ?? new MemoryStore(() => NOW_MS);
-  const mock = routedFetch({ [PROFILE]: () => json(fixture('profile-settings.json')), ...routes });
-  const { client } = makeClient(mock.fetch, store);
-  const context = createToolContext({
-    client: () => client,
-    store,
-    timeZoneOverride: options.timeZone,
-    now: () => new Date(NOW_MS), // 2026-03-02 10:00 in Helsinki
-  });
-  const paths = () => mock.dataCalls().map((call) => call.url.pathname);
-  const query = (prefix: string) =>
-    Object.fromEntries(
-      mock.dataCalls().find((call) => call.url.pathname.startsWith(prefix))?.url.searchParams ?? [],
-    );
-  return { context, paths, query, store };
-}
-
-/** Garmin's location and owner fields must never appear in tool output. */
-function expectNoPrivateFields(output: unknown) {
-  const text = JSON.stringify(output);
-  for (const key of ['Latitude', 'Longitude', 'locationName', 'owner', 'displayName']) {
-    expect(text).not.toContain(key);
-  }
-}
+const setup = toolSetup;
+type Routes = Parameters<typeof toolSetup>[0];
 
 describe('time zone', () => {
   it('uses the Garmin profile and caches it in KV', async () => {
@@ -80,6 +53,7 @@ describe('garmin_search_activities', () => {
   it('defaults to the last 7 days and returns compact rows', async () => {
     const { context, query } = setup({ [SEARCH]: () => json(fixture('activities-search.json')) });
     const result = await searchActivitiesTool.run({}, context);
+    if (!result.activities) throw new Error('expected an activity list');
 
     expect(query(SEARCH)).toMatchObject({
       startDate: '2026-02-24',

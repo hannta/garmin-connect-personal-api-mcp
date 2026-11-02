@@ -29,17 +29,32 @@ export function durationFields(seconds: Maybe, prefix = 'duration') {
   return { [prefix]: formatDuration(seconds), [`${prefix}_s`]: round(seconds) };
 }
 
+/** Best efforts within one activity, present only when it was long enough. */
+export function fastestSplits(activity: ActivitySummary) {
+  const splits = {
+    '1km': formatDuration(activity.fastestSplit_1000),
+    '1mi': formatDuration(activity.fastestSplit_1609),
+    '5km': formatDuration(activity.fastestSplit_5000),
+    '10km': formatDuration(activity.fastestSplit_10000),
+    half_marathon: formatDuration(activity.fastestSplit_21098),
+    marathon: formatDuration(activity.fastestSplit_42195),
+  };
+  return Object.values(splits).some((value) => value !== null) ? splits : null;
+}
+
 /** One compact row per activity, for lists. */
 export function activityRow(activity: ActivitySummary) {
   const type = activity.activityType?.typeKey;
+  // Strength and other stationary activities report 0 m and 0 m/s: leave both out.
+  const hasDistance = (activity.distance ?? 0) > 0;
   return {
     id: activity.activityId,
     name: activity.activityName,
     type,
     start_local: localIsoFromPair(activity.startTimeLocal, activity.startTimeGMT),
-    distance_km: metersToKm(activity.distance),
+    distance_km: hasDistance ? metersToKm(activity.distance) : null,
     ...durationFields(activity.duration),
-    ...paceOrSpeed(type, activity.averageSpeed),
+    ...(hasDistance ? paceOrSpeed(type, activity.averageSpeed) : {}),
     avg_hr_bpm: round(activity.averageHR),
     max_hr_bpm: round(activity.maxHR),
     elevation_gain_m: round(activity.elevationGain),
@@ -49,6 +64,7 @@ export function activityRow(activity: ActivitySummary) {
       label: activity.trainingEffectLabel,
     },
     training_load: round(activity.activityTrainingLoad),
+    fastest_splits: fastestSplits(activity),
   };
 }
 

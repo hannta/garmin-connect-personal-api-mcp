@@ -64,3 +64,16 @@ export async function runTool(run: () => Promise<unknown>): Promise<CallToolResu
     return errorResult(errorMessage(error));
   }
 }
+
+/** For tools that join several Garmin sources and return what succeeded. */
+export function settledValue<T>(result: PromiseSettledResult<T>): T | undefined {
+  return result.status === 'fulfilled' ? result.value : undefined;
+}
+
+export function settledWarning(
+  what: string,
+  result: PromiseSettledResult<unknown>,
+): string | undefined {
+  if (result.status === 'fulfilled') return undefined;
+  return `${what} unavailable: ${errorMessage(result.reason)}`;
+}
