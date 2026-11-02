@@ -388,7 +388,7 @@ passphrase forces a new sign-in. ✅
       kept out of `wrangler.jsonc`
 - [x] `wrangler deploy` to `https://garmin-connect-personal-api-mcp.<subdomain>.workers.dev`
 - [x] claude.ai → Settings → Connectors → Add custom connector (URL ending in `/mcp`)
-- [ ] Test from the phone with this connector alone, and together with Strava
+- [x] Test from the phone with this connector alone, and together with Strava
 - [x] Write `docs/DEPLOY.md` from the real steps taken
 
 **Done when:** Claude on the phone answers coaching questions using only this connector's
