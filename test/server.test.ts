@@ -3,7 +3,6 @@ import { InMemoryTransport } from '@modelcontextprotocol/server';
 import { describe, expect, it, vi } from 'vitest';
 import { GarminError } from '../src/garmin/errors';
 import { MemoryStore } from '../src/garmin/store';
-import worker from '../src/index';
 import { createServer } from '../src/server';
 import { compact, errorMessage, runTool } from '../src/tools/result';
 import { NOW_MS, TEST_KEY, fixture, json, routedFetch } from './helpers';
@@ -23,7 +22,6 @@ function testEnv(overrides: Partial<Env> = {}): Env {
     GARMIN_KV: new MemoryStore(() => NOW_MS) as unknown as KVNamespace,
     OAUTH_KV: new MemoryStore(() => NOW_MS) as unknown as KVNamespace,
     OWNER_PASSPHRASE: 'unused',
-    COOKIE_ENCRYPTION_KEY: 'unused',
     ...overrides,
   };
 }
@@ -100,45 +98,5 @@ describe('MCP server', () => {
     const result = await client.callTool({ name: 'garmin_get_profile', arguments: {} });
     expect(result.isError).toBe(true);
     expect(text(result)).toMatch(/GARMIN_API_KEY is not set/);
-  });
-});
-
-describe('Worker entry', () => {
-  const ctx = { waitUntil: () => undefined, passThroughOnException: () => undefined };
-  // Node's Request doesn't add a Host header like the Workers runtime does.
-  const call = (url: string, init: RequestInit = {}) => {
-    const headers = new Headers(init.headers);
-    headers.set('host', new URL(url).host);
-    return worker.fetch(
-      new Request(url, { ...init, headers }) as Parameters<typeof worker.fetch>[0],
-      testEnv(),
-      ctx as unknown as ExecutionContext,
-    );
-  };
-  const listTools = {
-    method: 'POST',
-    headers: {
-      'content-type': 'application/json',
-      accept: 'application/json, text/event-stream',
-      'mcp-protocol-version': '2025-06-18',
-    },
-    body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'tools/list', params: {} }),
-  };
-
-  it('serves MCP on localhost', async () => {
-    const response = await call('http://localhost:8787/mcp', listTools);
-    expect(response.status).toBe(200);
-    const body = await response.text();
-    for (const name of TOOL_NAMES) expect(body).toContain(name);
-  });
-
-  it('refuses MCP on other hosts until OAuth exists', async () => {
-    const response = await call('https://garmin.example.workers.dev/mcp', listTools);
-    expect(response.status).toBe(403);
-  });
-
-  it('answers / and 404s anything else', async () => {
-    expect((await call('http://localhost/')).status).toBe(200);
-    expect((await call('http://localhost/nope')).status).toBe(404);
   });
 });

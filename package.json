@@ -13,7 +13,7 @@
     "deploy": "wrangler deploy",
     "types": "wrangler types --env-file .dev.vars.example",
     "types:check": "wrangler types --check --env-file .dev.vars.example",
-    "typecheck": "tsc -p . && tsc -p test && tsc -p scripts",
+    "typecheck": "tsc -p . && tsc -p test && tsc -p test/worker && tsc -p scripts",
     "lint": "eslint .",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
@@ -28,20 +28,18 @@
         "description": "Garmin Connect Personal API key. Create it in Garmin Connect on the web under **Personal API Key**. It is shown only once and expires (30 days – 1 year)."
       },
       "OWNER_PASSPHRASE": {
-        "description": "Passphrase you enter once when adding the connector in Claude. Generate a strong one with `openssl rand -base64 32` and keep it in a password manager."
-      },
-      "COOKIE_ENCRYPTION_KEY": {
-        "description": "Random secret that signs the login form's CSRF cookie. Generate with `openssl rand -base64 32`."
+        "description": "Passphrase you enter once when adding the connector in Claude (at least 16 characters; changing it signs out every connected app). Generate a strong one with `openssl rand -base64 32` and keep it in a password manager."
       },
       "OAUTH_KV": {
         "description": "KV namespace for OAuth clients, grants and tokens."
       },
       "GARMIN_KV": {
-        "description": "KV namespace for the cached Garmin access token and small caches."
+        "description": "KV namespace for the cached Garmin access token, failed sign-in counters and small caches."
       }
     }
   },
   "devDependencies": {
+    "@cloudflare/vitest-plugin": "1.4.11",
     "@eslint/js": "10.0.1",
     "@modelcontextprotocol/client": "2.4.0",
     "@types/node": "24.19.2",
@@ -59,6 +57,7 @@
     "workerd@1.20261023.1": true
   },
   "dependencies": {
+    "@cloudflare/workers-oauth-provider": "1.2.4",
     "@modelcontextprotocol/server": "2.4.0",
     "agents": "0.32.0",
     "zod": "4.6.7"

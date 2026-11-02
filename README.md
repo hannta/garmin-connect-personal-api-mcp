@@ -8,8 +8,8 @@ A self-hosted, read-only [MCP](https://modelcontextprotocol.io) server that give
 data through the official **Garmin Connect Personal API**. It runs on your own
 Cloudflare account, so it works in the Claude web and mobile apps as a custom connector.
 
-**Status:** early development. The MCP server and tools work locally; OAuth and
-deployment come next, so it can't be connected to Claude yet. See [PLAN.md](PLAN.md).
+**Status:** early development. The MCP server, tools and sign-in work locally;
+deployment and connecting to Claude come next. See [PLAN.md](PLAN.md).
 
 ## Tools
 
@@ -38,6 +38,19 @@ The one exception is a planned, optional feature: **per-lap data from FIT files*
 **Workers Paid** ($5/month). With it off (the default), activity tools return interval
 totals instead.
 
+## Security
+
+- **Sign-in:** OAuth 2.1 in front of `/mcp`. You approve each app once on a sign-in page
+  with your `OWNER_PASSPHRASE`; Claude then keeps access with refresh tokens. Access
+  tokens last 1 hour; sign-in lasts 30 days from the last use.
+- **Brute force:** 5 wrong passphrases from one IP, or 20 in total, pause sign-in for
+  15 minutes. Connected apps keep working.
+- **Sign everyone out:** change `OWNER_PASSPHRASE`. Every existing token and refresh
+  token stops working.
+- **Read-only:** no tool writes to Garmin. Location data is never returned.
+- Secrets live only in Worker secrets; the API key, tokens and passphrase are never
+  logged.
+
 ## Not available from the Personal API
 
 Training Readiness, Training Status, VO2max, personal records, gear / shoe mileage and
@@ -49,16 +62,16 @@ Requires Node.js 24+.
 
 ```bash
 npm install
-cp .dev.vars.example .dev.vars   # then add your GARMIN_API_KEY
+cp .dev.vars.example .dev.vars   # then add GARMIN_API_KEY and OWNER_PASSPHRASE
 npm run check                     # typecheck, lint, format check, tests
 npm run today                     # print today's recovery data using your key
 npm run dev                       # MCP server at http://localhost:8787/mcp
 ```
 
-Until OAuth is added, the MCP endpoint has no authentication, so it only answers on
-localhost; a deployed Worker refuses MCP requests. Try it with the
+The MCP endpoint requires OAuth. Try it with the
 [MCP Inspector](https://github.com/modelcontextprotocol/inspector) (Streamable HTTP,
-`http://localhost:8787/mcp`).
+`http://localhost:8787/mcp`): it registers itself, opens the sign-in page, and you enter
+`OWNER_PASSPHRASE`.
 
 `.dev.vars` is git-ignored. Tests use synthetic fixtures only — never real data.
 

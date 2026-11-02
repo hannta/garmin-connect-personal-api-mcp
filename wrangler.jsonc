@@ -3,6 +3,8 @@
   "name": "garmin-connect-personal-api-mcp",
   "main": "src/index.ts",
   "compatibility_date": "2026-10-30",
+  // Needed for OAuth Client ID Metadata Documents (fetches only public URLs).
+  "compatibility_flags": ["global_fetch_strictly_public"],
   "observability": {
     "enabled": true,
   },

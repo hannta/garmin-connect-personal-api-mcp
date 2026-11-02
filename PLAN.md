@@ -84,8 +84,8 @@ Garmin Connect Personal API
 - `zod` for tool input schemas
 - `@garmin/fitsdk` + `fflate` for FIT activity files — only for the optional
   `ENABLE_FIT_LAPS` feature, added later
-- `vitest` 5 for tests. Phase 1–2 code runs in Node (MCP via the client SDK and the
-  Worker's `fetch`); Worker-runtime tests in Phase 3 use `@cloudflare/vitest-plugin`
+- `vitest` 5 for tests, two projects: Garmin client, tools and MCP server in Node; the
+  Worker with OAuth in workerd via `@cloudflare/vitest-plugin`
   (`@cloudflare/vitest-pool-workers` is deprecated)
 - npm as the package manager
 - ESLint + Prettier, GitHub Actions CI
@@ -98,10 +98,14 @@ Garmin Connect Personal API
 ```
 garmin-connect-personal-api-mcp/
 ├─ src/
-│  ├─ index.ts           # Worker entry: OAuth provider wraps the MCP handler
+│  ├─ index.ts           # Worker entry
+│  ├─ oauth.ts           # OAuthProvider: routes, token lifetimes, grant checks
+│  ├─ server.ts          # McpServer factory, tool registration
 │  ├─ auth/
-│  │  ├─ login.ts        # authorize handler: login form, passphrase check
-│  │  └─ rate-limit.ts   # failed-attempt tracking + lockout
+│  │  ├─ authorize.ts    # /authorize: sign-in page flow, passphrase check
+│  │  ├─ page.ts         # sign-in page HTML + security headers
+│  │  ├─ passphrase.ts   # constant-time check, grant fingerprint
+│  │  └─ lockout.ts      # failed-attempt counters + lockout (KV)
 │  ├─ garmin/
 │  │  ├─ token.ts        # API key → access token, KV cache, refresh on 401
 │  │  ├─ client.ts       # typed fetch wrapper, errors, retries
@@ -114,7 +118,8 @@ garmin-connect-personal-api-mcp/
 │  └─ types.ts
 ├─ test/
 │  ├─ fixtures/          # synthetic Garmin responses (never real data)
-│  └─ *.test.ts
+│  ├─ worker/            # OAuth flow tests in workerd (@cloudflare/vitest-plugin)
+│  └─ *.test.ts          # Node tests
 ├─ docs/
 │  └─ DEPLOY.md          # step-by-step self-hosting guide
 ├─ .github/workflows/ci.yml
@@ -128,15 +133,14 @@ garmin-connect-personal-api-mcp/
 
 ## Configuration
 
-| Name                    | Kind                  | Purpose                                                                                       |
-| ----------------------- | --------------------- | --------------------------------------------------------------------------------------------- |
-| `GARMIN_API_KEY`        | secret                | Garmin Connect Personal API key                                                               |
-| `OWNER_PASSPHRASE`      | secret                | Login passphrase; generate with `openssl rand -base64 32`                                     |
-| `COOKIE_ENCRYPTION_KEY` | secret                | Signs the login form's CSRF cookie                                                            |
-| `OAUTH_KV`              | KV binding            | OAuth clients, grants and tokens                                                              |
-| `GARMIN_KV`             | KV binding            | Cached Garmin access token, failed-login counters, decoded activity summaries, small caches   |
-| `TIMEZONE`              | var (optional)        | IANA time zone override, e.g. `Europe/Helsinki`; default comes from the Garmin profile        |
-| `ENABLE_FIT_LAPS`       | var (optional, later) | `true` enables per-lap data from FIT files. Off by default; long activities need Workers Paid |
+| Name               | Kind                  | Purpose                                                                                                  |
+| ------------------ | --------------------- | -------------------------------------------------------------------------------------------------------- |
+| `GARMIN_API_KEY`   | secret                | Garmin Connect Personal API key                                                                          |
+| `OWNER_PASSPHRASE` | secret                | Sign-in passphrase (16+ chars); generate with `openssl rand -base64 32`. Changing it signs out every app |
+| `OAUTH_KV`         | KV binding            | OAuth clients, grants and tokens                                                                         |
+| `GARMIN_KV`        | KV binding            | Cached Garmin access token, failed-login counters, decoded activity summaries, small caches              |
+| `TIMEZONE`         | var (optional)        | IANA time zone override, e.g. `Europe/Helsinki`; default comes from the Garmin profile                   |
+| `ENABLE_FIT_LAPS`  | var (optional, later) | `true` enables per-lap data from FIT files. Off by default; long activities need Workers Paid            |
 
 ## Units
 
@@ -325,7 +329,7 @@ Findings: [discovery/FINDINGS.md](discovery/FINDINGS.md).
 - [x] Combined tool: `garmin_get_day`
 - [x] Privacy filters: every formatter whitelists its fields, so coordinates, location
       names and owner details never reach the output (tested)
-- [x] Until OAuth exists, `/mcp` answers only on localhost (403 elsewhere)
+- [x] Until OAuth exists, `/mcp` answers only on localhost (403 elsewhere; removed in Phase 3)
 - [x] Tested locally with `wrangler dev` against real data (MCP JSON-RPC over HTTP), and
       in CI through the MCP client SDK and the Worker's `fetch` handler in Node
 - [ ] Optional: check with MCP Inspector by hand
@@ -338,36 +342,49 @@ Notes:
   power zones is only available there (two Garmin calls per activity).
 - Measured in Node: ~0.5 ms CPU per warm request; bundle 225 KB gzipped.
 - `compatibility_date` is 2026-10-30, the newest the local workerd supports.
-- Worker-runtime tests with `@cloudflare/vitest-plugin` move to Phase 3, where OAuth
+- Worker-runtime tests with `@cloudflare/vitest-plugin` moved to Phase 3, where OAuth
   wiring needs them; Phase 2's handler runs fine in Node.
 
 **Done when:** the six first-release tools are listed and all of them return real data. ✅
 
 ### Phase 3 — OAuth + lockdown
 
-- [ ] `workers-oauth-provider` wrapping the MCP handler (dynamic client registration,
-      token issue + refresh); confirm the current recommended wiring for a Worker that
-      is both authorization server and resource server (`OAuthProvider` vs.
-      `OAuthResourceServer`), using non-deprecated APIs only
-- [ ] Tools read the signed-in grant via `getMcpAuthContext()`
-- [ ] Token lifetimes: access token 1 hour, refresh token 30 days, renewed on each
-      use — sign in again only after 30 days without use
-- [ ] Login page on `/authorize`: passphrase form, shows which client is asking for access
-- [ ] Constant-time passphrase comparison (compare hashes, never the raw strings)
-- [ ] CSRF token on the form (signed cookie), strict security headers, no caching
-- [ ] Rate limiting: e.g. 5 failed attempts → 15 min lockout, counters in KV
-- [ ] Passphrase never logged; generic error message on failure
-- [ ] Revocation: rotating `OWNER_PASSPHRASE` invalidates existing grants
-      (grants store a fingerprint of the passphrase they were issued under)
-- [ ] Tests for the login flow, CSRF, lockout and revocation
-- [ ] Secrets via `wrangler secret put`; KV namespaces created
+- [x] `workers-oauth-provider` 1.2 wrapping the MCP handler: the combined `OAuthProvider`
+      (one Worker is both authorization server and resource; fully supported, and simpler
+      to self-host than the split-Workers shape). Dynamic client registration and Client
+      ID Metadata Documents (`global_fetch_strictly_public` flag)
+- [x] Resource URL from the request origin (`<origin>/mcp`), one provider per hostname —
+      no URL setting needed. `env` is copied per request because the library caches its
+      helpers on `env` (otherwise the first hostname, e.g. a preview URL, wins; tested)
+- [x] Token lifetimes: access token 1 hour, refresh token 30 days, renewed on each
+      use (`refreshTokenIdleTTL`) — sign in again only after 30 days without use
+- [x] Sign-in page on `/authorize`: client name (escaped), redirect host, loopback warning,
+      passphrase field, Allow / Deny
+- [x] Constant-time passphrase comparison (SHA-256 digests); passphrase must be 16+
+      characters, otherwise sign-in is disabled with a setup message
+- [x] CSRF and framing: the library's consent helpers bind the form to the browser with
+      a one-time handle and `__Host-` cookie, so `COOKIE_ENCRYPTION_KEY` was dropped.
+      Strict CSP (`default-src 'none'`), `no-store`, `X-Frame-Options: DENY`,
+      `Referrer-Policy: no-referrer`
+- [x] Lockout: 5 failures per IP or 20 in total → 15 minutes, counters in `GARMIN_KV`;
+      only new sign-ins are blocked
+- [x] Passphrase never logged; generic "Wrong passphrase." message
+- [x] Revocation: grants store a passphrase fingerprint; after rotation `/mcp` returns
+      401 and the refresh fails with `invalid_grant`, which revokes the grant
+- [x] Tests in workerd: discovery, registration, sign-in page and escaping, wrong
+      passphrase, CSRF, deny, lockout, token + refresh, MCP access, rotation, two hostnames
+- [x] Full flow checked locally with `wrangler dev` and real Garmin data
+- Not needed: tools reading the grant via `getMcpAuthContext()` — single user, and the
+  grant check runs before the MCP handler
 
 **Done when:** unauthenticated requests get 401, a wrong passphrase is rejected and
 eventually locked out, the right one completes the OAuth flow, and rotating the
-passphrase forces a new sign-in.
+passphrase forces a new sign-in. ✅
 
 ### Phase 4 — Deploy + connect
 
+- [ ] Secrets via `wrangler secret put` (`GARMIN_API_KEY`, `OWNER_PASSPHRASE`); KV
+      namespaces created
 - [ ] `wrangler deploy` to `https://garmin-connect-personal-api-mcp.<subdomain>.workers.dev`
 - [ ] claude.ai → Settings → Connectors → Add custom connector (URL ending in `/mcp`)
 - [ ] Test from the phone with this connector alone, and together with Strava
@@ -407,7 +424,8 @@ Built one at a time after the first release is in daily use, in this order:
 ## Security & privacy
 
 - Single-user instances; OAuth in front of every MCP request, granted only after the
-  owner enters `OWNER_PASSPHRASE` (long random value, rate-limited login, CSRF-protected)
+  owner enters `OWNER_PASSPHRASE` (long random value, rate-limited sign-in,
+  CSRF-protected)
 - Sign-in happens once when adding the connector; refresh tokens keep it working
 - Secrets only as Worker secrets — never committed, never logged
 - Read-only tools only
@@ -478,3 +496,8 @@ Built one at a time after the first release is in daily use, in this order:
 - **Types file (2026-11-01):** `worker-configuration.d.ts` is committed and generated from
   `.dev.vars.example` (`npm run types`), so it's the same on every machine; CI runs
   `wrangler types --check`.
+- **OAuth shape (2026-11-02):** one Worker with the combined `OAuthProvider`, not the
+  library's recommended split Workers: a single Worker keeps self-hosting and the Deploy
+  button simple, and the combined shape remains fully supported.
+- **No cookie secret (2026-11-02):** `COOKIE_ENCRYPTION_KEY` dropped; the library's
+  consent helpers provide CSRF protection.

@@ -1,0 +1,8 @@
+{
+  // Tests that run inside workerd: Workers types plus the cloudflare:test module.
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "types": ["../../worker-configuration.d.ts", "@cloudflare/vitest-plugin/types"]
+  },
+  "include": ["**/*.ts", "../../src", "../../worker-configuration.d.ts"]
+}
