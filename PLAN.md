@@ -383,12 +383,13 @@ passphrase forces a new sign-in. ✅
 
 ### Phase 4 — Deploy + connect
 
-- [ ] Secrets via `wrangler secret put` (`GARMIN_API_KEY`, `OWNER_PASSPHRASE`); KV
-      namespaces created
-- [ ] `wrangler deploy` to `https://garmin-connect-personal-api-mcp.<subdomain>.workers.dev`
-- [ ] claude.ai → Settings → Connectors → Add custom connector (URL ending in `/mcp`)
+- [x] Secrets via `wrangler secret put` (`GARMIN_API_KEY`, `OWNER_PASSPHRASE`); KV
+      namespaces created — first deploy used `--secrets-file`; KV auto-provisioned, IDs
+      kept out of `wrangler.jsonc`
+- [x] `wrangler deploy` to `https://garmin-connect-personal-api-mcp.<subdomain>.workers.dev`
+- [x] claude.ai → Settings → Connectors → Add custom connector (URL ending in `/mcp`)
 - [ ] Test from the phone with this connector alone, and together with Strava
-- [ ] Write `docs/DEPLOY.md` from the real steps taken
+- [x] Write `docs/DEPLOY.md` from the real steps taken
 
 **Done when:** Claude on the phone answers coaching questions using only this connector's
 first-release tools (training load trends come in Phase 5).

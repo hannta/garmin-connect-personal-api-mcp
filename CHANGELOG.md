@@ -16,3 +16,4 @@ All notable changes are documented here. The project follows
 - MCP server at `/mcp` (stateless Streamable HTTP) with six
   read-only tools: `garmin_get_day`, `garmin_search_activities`, `garmin_get_activity`,
   `garmin_get_sleep`, `garmin_get_hrv`, `garmin_get_profile`
+- Deployment guide: [docs/DEPLOY.md](docs/DEPLOY.md)

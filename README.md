@@ -8,8 +8,10 @@ A self-hosted, read-only [MCP](https://modelcontextprotocol.io) server that give
 data through the official **Garmin Connect Personal API**. It runs on your own
 Cloudflare account, so it works in the Claude web and mobile apps as a custom connector.
 
-**Status:** early development. The MCP server, tools and sign-in work locally;
-deployment and connecting to Claude come next. See [PLAN.md](PLAN.md).
+**Status:** early development. The first six tools work end to end on Cloudflare;
+more tools come next. See [PLAN.md](PLAN.md).
+
+To run your own: [docs/DEPLOY.md](docs/DEPLOY.md).
 
 ## Tools
 
