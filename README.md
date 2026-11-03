@@ -60,9 +60,6 @@ ChatGPT, Cursor or VS Code.
 - Output is metric, with the unit in every field name. Dates are `YYYY-MM-DD` in your
   time zone; sleep and HRV are keyed by the wake-up date.
 - Location, sexual activity and sex drive data are never returned.
-- The last five tools were built from Garmin's
-  [OpenAPI spec](https://developer.garmin.com/gc-developer-program/personal/swagger-docs/)
-  without real data to test against. If their output looks wrong, please open an issue.
 
 ## Development
 
