@@ -92,8 +92,9 @@ Secrets, KV data and connected apps survive deploys.
 - **CPU limit (free plan):** to check whether calls hit the free plan's CPU limit, open
   the Worker in the Cloudflare dashboard → **Metrics** and look for **Exceeded CPU Time
   Limits**, or run `npx wrangler tail --format json` and look for
-  `"outcome": "exceededCpu"`. Claude shows these failures as a connector error. If they
-  appear, switch the account to Workers Paid ($5/month); no code changes needed.
+  `"outcome": "exceededCpu"`. Claude shows these failures as a connector error
+  (Cloudflare error 1102). If they appear, switch the account to Workers Paid
+  ($5/month); no code changes needed.
 - **Sign out every app:** run `npx wrangler secret put OWNER_PASSPHRASE` with a new
   value. Each app then needs to connect again.
 - **Rotate the Garmin key:** `npx wrangler secret put GARMIN_API_KEY`. The Garmin token

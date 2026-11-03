@@ -1,18 +1,14 @@
-# garmin-connect-personal-api-mcp
+# Garmin Connect Personal API MCP
 
 > **Unofficial project.** Not affiliated with, endorsed by or supported by Garmin.
 > "Garmin" and "Garmin Connect" are trademarks of Garmin Ltd. or its subsidiaries.
 
-A self-hosted, read-only [MCP](https://modelcontextprotocol.io) server that gives Claude
-(and other MCP clients) access to your own Garmin Connect training, recovery and health
-data through the official **Garmin Connect Personal API**. It runs on your own
-Cloudflare account, so it works in the Claude web and mobile apps as a custom connector.
+A read-only [MCP](https://modelcontextprotocol.io) server that gives Claude your own
+Garmin Connect training, recovery and health data through the official **Garmin Connect
+Personal API**. It runs on your own Cloudflare account and works as a custom connector in
+the Claude web, desktop and mobile apps.
 
-**Status:** early development. The daily, single-activity and date-range tools run on
-Cloudflare; the full-coverage tools (Body Battery, stress, steps, …) are new. See
-[PLAN.md](PLAN.md).
-
-To run your own: [docs/DEPLOY.md](docs/DEPLOY.md).
+**Getting started:** [docs/DEPLOY.md](docs/DEPLOY.md).
 
 ## Tools
 
@@ -45,55 +41,16 @@ To run your own: [docs/DEPLOY.md](docs/DEPLOY.md).
 | `garmin_get_menstrual_cycle`     | Cycle day, period and fertile window, predictions and cycle analysis                                                         |
 | `garmin_get_menstrual_day`       | One day's logged flow, symptoms and moods, with that day's cycle summary                                                     |
 
-The last five were built from Garmin's
-[OpenAPI spec](https://developer.garmin.com/gc-developer-program/personal/swagger-docs/)
-because the developer's account has no such data; if their output looks wrong with your
-data, please open an issue. They return `no_data` when nothing is logged. Sexual activity
-and sex drive logs are never returned.
+### Good to know
 
-Range tools default to the last 7 days and make one Garmin request per source. A range
-longer than one request allows (e.g. 31 nights of sleep) returns an error with the
-maximum, and Claude splits it into several calls. Range results include plain average /
-min / max statistics; the analysis is left to Claude.
-
-All output is metric (km, min/km, kg), with the unit in every field name. Dates are
-`YYYY-MM-DD` in your time zone (from your Garmin profile, or the `TIMEZONE` var);
-sleep and HRV are keyed by the wake-up date. Location data is never returned.
-
-## Free vs. paid Cloudflare plan
-
-Everything works on Cloudflare's **free Workers plan**. Tool calls can go over the free
-plan's 10 ms CPU limit, mostly from library overhead (OAuth and the MCP SDK); so far
-Cloudflare hasn't rejected them. If calls start failing with "Exceeded CPU Time Limits"
-(error 1102), switch to **Workers Paid** ($5/month) — see
-[docs/DEPLOY.md](docs/DEPLOY.md#operating).
-
-A planned, optional feature needs Workers Paid regardless: **per-lap data from FIT files**
-(`ENABLE_FIT_LAPS`). Decoding a FIT file takes roughly 20 ms for a 1-hour run and
-50–60 ms for a marathon, which exceeds the free plan's limit. Enable it only on
-**Workers Paid** ($5/month). With it off (the default), activity tools return interval
-totals instead.
-
-## Security
-
-- **Sign-in:** OAuth 2.1 in front of `/mcp`. You approve each app once on a sign-in page
-  with your `OWNER_PASSPHRASE`; Claude then keeps access with refresh tokens. Access
-  tokens last 1 hour; sign-in lasts 30 days from the last use.
-- **Brute force:** 5 wrong passphrases from one IP, or 20 in total, pause sign-in for
-  15 minutes. Connected apps keep working.
-- **Sign everyone out:** change `OWNER_PASSPHRASE`. Every existing token and refresh
-  token stops working.
-- **Read-only:** no tool writes to Garmin. Location data is never returned.
-- Secrets live only in Worker secrets; the API key, tokens and passphrase are never
-  logged.
-
-## Not available from the Personal API
-
-Training Readiness, Training Status, a VO2max history, a personal-records list, gear /
-shoe mileage and individual strength sets are not exposed by the Personal API, so this
-server can't provide them. Strength activities do include sets, reps and weight per
-exercise category. Activity search has a per-activity VO2max field in Garmin's spec,
-but it has been empty so far; the tools return it when Garmin fills it.
+- Range tools default to the last 7 days. If a range is too long for one Garmin
+  request, the error says the maximum and Claude splits it into several calls.
+- Output is metric, with the unit in every field name. Dates are `YYYY-MM-DD` in your
+  time zone; sleep and HRV are keyed by the wake-up date.
+- Location, sexual activity and sex drive data are never returned.
+- The last five tools were built from Garmin's
+  [OpenAPI spec](https://developer.garmin.com/gc-developer-program/personal/swagger-docs/)
+  without real data to test against. If their output looks wrong, please open an issue.
 
 ## Development
 
@@ -107,12 +64,9 @@ npm run today                     # print today's recovery data using your key
 npm run dev                       # MCP server at http://localhost:8787/mcp
 ```
 
-The MCP endpoint requires OAuth. Try it with the
-[MCP Inspector](https://github.com/modelcontextprotocol/inspector) (Streamable HTTP,
-`http://localhost:8787/mcp`): it registers itself, opens the sign-in page, and you enter
+To try the local server, connect the
+[MCP Inspector](https://github.com/modelcontextprotocol/inspector) to it and sign in with
 `OWNER_PASSPHRASE`.
-
-`.dev.vars` is git-ignored. Tests use synthetic fixtures only — never real data.
 
 ## License
 

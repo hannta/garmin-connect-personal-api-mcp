@@ -491,9 +491,9 @@ Tools in Tools → Full endpoint coverage, in this order (most useful for coachi
 - [x] `garmin_get_weight_goals`
 - [x] `garmin_get_spo2`
 - [x] `garmin_get_hydration`, `garmin_get_wellness_activities`, `garmin_get_food_log`
-      (pass-through, untested with real data)
-- [x] `garmin_get_menstrual_cycle`, `garmin_get_menstrual_day` (pass-through, untested)
-- [x] `garmin_get_activity_workouts` (pass-through, untested)
+      (formatted from Garmin's OpenAPI spec; no data on the owner's account)
+- [x] `garmin_get_menstrual_cycle`, `garmin_get_menstrual_day` (from the spec; no data)
+- [x] `garmin_get_activity_workouts` (decoded workout steps and targets)
 - [x] README tool list, CHANGELOG, server instructions
 
 **Done when:** all 26 tools are deployed; the ones with data on the owner's account
@@ -501,17 +501,15 @@ answer a question from Claude; the untested ones return Garmin's response cleanl
 
 Tested 2026-11-03 against the owner's account from a local script (one request per tool,
 the 28-day stress limit, `no_data` for hydration, wellness activities, menstrual cycle
-and workouts); not yet deployed.
+and workouts). Deployed 2026-11-03; the live connector returns the new sleep fields.
 
 ### Phase 7 — Polish + go public (optional)
 
-- [ ] Tune tool descriptions based on real usage
-- [ ] Cache stable data (HR zones, profile)
-- [ ] Structured logging without health data
-- [ ] Reminder / clear error before the Garmin key expires
-- [ ] `SECURITY.md`, final README (incl. how to pull updates into a deployed copy and
-      how to rotate the Garmin key)
-- [ ] Switch repo visibility to public
+- [x] `SECURITY.md`
+- [ ] Final README (incl. how to pull updates into a deployed copy and how to rotate the
+      Garmin key)
+- [ ] Switch repo visibility to public, and turn on private vulnerability reporting
+      (Settings → Security) so SECURITY.md's reporting link works
 - [ ] Add the "Deploy to Cloudflare" button to the README and test a from-scratch
       deploy with a second Cloudflare account (requires the public repo)
 
@@ -636,3 +634,6 @@ and workouts); not yet deployed.
   daily summary; training days in the profile. VO2max and lactate threshold are mapped
   but empty in real data. `garmin_get_sleep` now reads the one-day range endpoint,
   which returns the same fields plus naps and breathing disruptions.
+- **Phase 7 scope (2026-11-03):** skipped: tuning tool descriptions from real usage,
+  caching HR zones and profile, structured logging, and a reminder before the Garmin key
+  expires. Kept: `SECURITY.md`, the final README, going public and the Deploy button.
