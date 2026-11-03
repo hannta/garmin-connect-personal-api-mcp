@@ -3,10 +3,11 @@
 > **Unofficial project.** Not affiliated with, endorsed by or supported by Garmin.
 > "Garmin" and "Garmin Connect" are trademarks of Garmin Ltd. or its subsidiaries.
 
-A read-only [MCP](https://modelcontextprotocol.io) server that gives Claude your own
-Garmin Connect training, recovery and health data through the official **Garmin Connect
-Personal API**. It runs on your own Cloudflare account and works as a custom connector in
-the Claude web, desktop and mobile apps.
+A read-only [MCP](https://modelcontextprotocol.io) server that gives AI assistants your
+own Garmin Connect training, recovery and health data through the official **Garmin
+Connect Personal API**. It runs on your own Cloudflare account, and any MCP client that
+supports remote servers with OAuth can connect to it — for example Claude (web, desktop
+and mobile) as a custom connector.
 
 **Getting started:** [docs/DEPLOY.md](docs/DEPLOY.md).
 
@@ -44,7 +45,7 @@ the Claude web, desktop and mobile apps.
 ### Good to know
 
 - Range tools default to the last 7 days. If a range is too long for one Garmin
-  request, the error says the maximum and Claude splits it into several calls.
+  request, the error says the maximum and the assistant splits it into several calls.
 - Output is metric, with the unit in every field name. Dates are `YYYY-MM-DD` in your
   time zone; sleep and HRV are keyed by the wake-up date.
 - Location, sexual activity and sex drive data are never returned.

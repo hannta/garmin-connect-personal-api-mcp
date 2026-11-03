@@ -27,7 +27,7 @@ own copy, pull updates and redeploy.
 ## Limits
 
 - Sign-in is the passphrase alone: use a long random value.
-- Activity names and notes reach Claude as text and could contain instructions; all
-  tools are read-only, which limits the impact.
+- Activity names and notes reach the AI assistant as text and could contain
+  instructions; all tools are read-only, which limits the impact.
 - Anyone with access to your Cloudflare account can read the secrets: protect it with
   2FA.

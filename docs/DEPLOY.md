@@ -1,14 +1,15 @@
 # Deploying
 
-This guide puts the server on your own Cloudflare account and connects it to Claude. It
-takes about ten minutes and fits in the Workers **free plan**.
+This guide puts the server on your own Cloudflare account and connects it to an MCP
+client. It takes about ten minutes and fits in the Workers **free plan**.
 
 You need:
 
 - A Garmin Connect Personal API key
 - A Cloudflare account (free)
 - Node.js 24+ and a clone of this repository
-- A Claude plan that supports custom connectors
+- An MCP client that supports remote servers with OAuth, e.g. a Claude plan with custom
+  connectors
 
 ## 1. Sign in to Cloudflare
 
@@ -63,7 +64,9 @@ Expect `401` with a `WWW-Authenticate` header pointing at
 `/.well-known/oauth-protected-resource/mcp`. That means sign-in is required, as it
 should be.
 
-## 5. Connect Claude
+## 5. Connect a client
+
+### Claude
 
 1. In Claude (web or desktop), open **Settings → Connectors → Add custom connector**.
 2. Name it, e.g. "Garmin", and enter the URL ending in `/mcp`:
@@ -74,6 +77,12 @@ should be.
 
 The connector then works in the Claude mobile apps too. Turn it on in a chat from the
 tools menu and ask, for example, "How did I sleep last night, and how was my run?"
+
+### Other MCP clients
+
+Add a remote MCP server with the URL `https://<your-worker>/mcp` (Streamable HTTP). The
+client needs OAuth support: it registers itself, opens the server's sign-in page, and
+you enter your passphrase.
 
 ## Updating
 
@@ -92,7 +101,7 @@ Secrets, KV data and connected apps survive deploys.
 - **CPU limit (free plan):** to check whether calls hit the free plan's CPU limit, open
   the Worker in the Cloudflare dashboard → **Metrics** and look for **Exceeded CPU Time
   Limits**, or run `npx wrangler tail --format json` and look for
-  `"outcome": "exceededCpu"`. Claude shows these failures as a connector error
+  `"outcome": "exceededCpu"`. Clients show these failures as a connector error
   (Cloudflare error 1102). If they appear, switch the account to Workers Paid
   ($5/month); no code changes needed.
 - **Sign out every app:** run `npx wrangler secret put OWNER_PASSPHRASE` with a new
@@ -110,4 +119,4 @@ npx wrangler delete
 ```
 
 Then delete the two KV namespaces under **Storage & Databases → Workers KV** in the
-Cloudflare dashboard, and remove the connector in Claude.
+Cloudflare dashboard, and remove the connector from your MCP client.
