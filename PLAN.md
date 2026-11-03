@@ -290,7 +290,7 @@ endpoint has a tool. Same range rules as above; maximums measured 2026-11-03.
 
 - **Built from the spec:** hydration, wellness activities, food log and menstrual cycle
   return no data on the owner's account, so their tools follow Garmin's OpenAPI spec
-  (Swagger page, extracted to `discovery/raw/openapi.json`). Dates and times accept
+  (Swagger page). Dates and times accept
   both the spec's objects and the strings Garmin really sends. Workouts are decoded
   (HR = % max or bpm + 100, power = % FTP or watts + 1000, speed m/s → pace). Sexual
   activity and sex drive logs are not returned. Fixtures are synthetic, from the spec.
@@ -356,7 +356,7 @@ is stopped (Cloudflare error 1102); only that tool call fails, nothing is billed
 **Done when:** the real shape of every response we need is known and captured as
 synthetic fixtures.
 
-Findings: [discovery/FINDINGS.md](discovery/FINDINGS.md).
+Findings: [docs/garmin-api-notes.md](docs/garmin-api-notes.md).
 
 ### Phase 1 — Repo scaffold + Garmin client
 

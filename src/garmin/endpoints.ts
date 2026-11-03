@@ -1,5 +1,5 @@
 // One function per Garmin Personal API endpoint used by the tools. Paths and parameters
-// were verified against the live API in Phase 0 (discovery/FINDINGS.md). Inputs are
+// were verified against the live API (docs/garmin-api-notes.md). Inputs are
 // validated here so every caller gets the same limits.
 
 import { parseIsoDate, validateRange } from '../lib/dates';

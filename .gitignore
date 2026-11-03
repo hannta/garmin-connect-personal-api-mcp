@@ -6,9 +6,6 @@
 .env.*
 !.env.example
 
-# Real Garmin API responses from Phase 0 discovery (personal health data)
-discovery/raw/
-
 # Dependencies and build output
 node_modules/
 dist/

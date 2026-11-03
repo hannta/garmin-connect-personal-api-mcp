@@ -1,6 +1,7 @@
 // Response types for the Garmin Personal API endpoints this project uses. Only the fields
 // we read are declared, and all are optional/nullable: Garmin omits fields for days or
-// devices without the data. Shapes were recorded in Phase 0 (discovery/FINDINGS.md).
+// devices without the data. Shapes were checked against the live API
+// (docs/garmin-api-notes.md).
 // Units are Garmin's: meters, seconds, m/s, bpm, grams; GMT timestamps without offset.
 
 type N = number | null | undefined;
