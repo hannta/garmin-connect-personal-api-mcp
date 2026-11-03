@@ -197,16 +197,6 @@ export function garminDate(value: SpecDate): string | null {
   return typeof text === 'string' && /^\d{4}-\d{2}-\d{2}/.test(text) ? text.slice(0, 10) : null;
 }
 
-/** "HH:MM" from "HH:MM[:SS]" or the spec's { hour, minute }. */
-export function garminTimeOfDay(
-  value: string | { hour?: number | null; minute?: number | null } | null | undefined,
-): string | null {
-  if (typeof value === 'string') return /^\d{2}:\d{2}/.test(value) ? value.slice(0, 5) : null;
-  if (typeof value?.hour !== 'number') return null;
-  const minute = typeof value.minute === 'number' ? value.minute : 0;
-  return `${String(value.hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
-}
-
 /**
  * Local ISO time from a Garmin local + GMT timestamp pair, where each may be a string or
  * the spec's { date (UTC) } object. Falls back to the GMT time in `timeZone`.

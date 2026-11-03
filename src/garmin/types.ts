@@ -494,8 +494,6 @@ export interface WeightGoalsResponse {
 export type ConnectDate = string | { date?: S; localDate?: S } | null | undefined;
 /** A timestamp string, or the spec's { date (UTC), localDate }. */
 export type ConnectTimestamp = string | { date?: S; localDate?: S } | null | undefined;
-/** "HH:MM[:SS]", or the spec's { hour, minute }. */
-export type LocalTime = string | { hour?: N; minute?: N } | null | undefined;
 
 export interface DailyHydration {
   calendarDate?: S;

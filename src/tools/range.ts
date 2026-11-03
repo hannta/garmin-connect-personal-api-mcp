@@ -1,6 +1,6 @@
 // Shared handling for range tools: the default 7-day range, the per-tool maximum (one
-// Garmin request per source, so a longer range is an error asking Claude to split it),
-// and the plain `summary` statistics every range result carries.
+// Garmin request per source, so a longer range is an error asking the assistant to split
+// it), and the plain `summary` statistics every range result carries.
 
 import { DateInputError, addDays, daysInclusive, parseIsoDate } from '../lib/dates';
 import { round } from '../lib/units';

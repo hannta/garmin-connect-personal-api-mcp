@@ -1,4 +1,4 @@
-// Errors from the Garmin client. Messages are safe to show to the user and to Claude:
+// Errors from the Garmin client. Messages are safe to show to the user and the assistant:
 // they never contain the API key, the access token or response bodies.
 
 export type GarminErrorCode =

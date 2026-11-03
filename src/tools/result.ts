@@ -1,5 +1,6 @@
 // Turns tool output into MCP results: compact JSON without null fields, and errors as
-// readable tool errors (isError) instead of protocol failures, so Claude can explain them.
+// readable tool errors (isError) instead of protocol failures, so the assistant can
+// explain them.
 
 import type { CallToolResult } from '@modelcontextprotocol/server';
 import { GarminError } from '../garmin/errors';

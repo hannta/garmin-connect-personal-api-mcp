@@ -1,6 +1,6 @@
 // Range tools that mirror Garmin's range endpoints: one row per day (or night) with
-// numeric, unit-suffixed fields that Claude can compare across days, plus `summary`
-// statistics. Each tool call is exactly one Garmin request.
+// numeric, unit-suffixed fields that the assistant can compare across days, plus
+// `summary` statistics. Each tool call is exactly one Garmin request.
 
 import { z } from 'zod';
 import { getDailySummaries, getHrvRange, getSleepRange } from '../garmin/endpoints';
