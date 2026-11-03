@@ -80,6 +80,8 @@ To try the local server, connect the
 [MCP Inspector](https://github.com/modelcontextprotocol/inspector) to it and sign in with
 `OWNER_PASSPHRASE`.
 
+Architecture and conventions: [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md).
+
 ## License
 
 [MIT](LICENSE)
