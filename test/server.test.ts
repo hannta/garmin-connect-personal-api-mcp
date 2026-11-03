@@ -1,6 +1,7 @@
 import { Client } from '@modelcontextprotocol/client';
 import { InMemoryTransport } from '@modelcontextprotocol/server';
 import { describe, expect, it, vi } from 'vitest';
+import packageJson from '../package.json';
 import { GarminError } from '../src/garmin/errors';
 import { MemoryStore } from '../src/garmin/store';
 import { createServer } from '../src/server';
@@ -88,6 +89,14 @@ describe('result helpers', () => {
 });
 
 describe('MCP server', () => {
+  it('reports the package.json version to clients', async () => {
+    const client = await connect(testEnv());
+    expect(client.getServerVersion()).toMatchObject({
+      name: 'garmin-connect-personal-api-mcp',
+      version: packageJson.version,
+    });
+  });
+
   it('lists every tool as read-only', async () => {
     const client = await connect(testEnv());
     const { tools } = await client.listTools();

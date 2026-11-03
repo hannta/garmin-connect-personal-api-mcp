@@ -2,6 +2,7 @@
 // in front of it is in oauth.ts.
 
 import { McpServer } from '@modelcontextprotocol/server';
+import { version } from '../package.json';
 import { GarminClient } from './garmin/client';
 import type { KeyValueStore } from './garmin/store';
 import { TokenProvider } from './garmin/token';
@@ -32,7 +33,7 @@ import { getWellnessActivitiesTool } from './tools/wellness-activities';
 import { getActivityWorkoutsTool } from './tools/workouts';
 
 export const SERVER_NAME = 'garmin-connect-personal-api-mcp';
-export const SERVER_VERSION = '0.1.0';
+export const SERVER_VERSION = version;
 
 const INSTRUCTIONS = [
   "Read-only access to the user's Garmin Connect data (activities, sleep, HRV, daily",
