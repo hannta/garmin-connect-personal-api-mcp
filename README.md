@@ -1,7 +1,7 @@
 # Garmin Connect Personal API MCP
 
-> **Unofficial project.** Not affiliated with, endorsed by or supported by Garmin.
-> "Garmin" and "Garmin Connect" are trademarks of Garmin Ltd. or its subsidiaries.
+> Not affiliated with or endorsed by Garmin. Garmin and Garmin Connect are trademarks of
+> Garmin Ltd.
 
 A read-only [MCP](https://modelcontextprotocol.io) server that gives AI assistants your
 own Garmin Connect training, recovery and health data through the official **Garmin
@@ -9,7 +9,18 @@ Connect Personal API**. It runs on your own Cloudflare account, and any MCP clie
 supports remote servers with OAuth can connect to it — for example Claude (web, desktop
 and mobile) as a custom connector.
 
-**Getting started:** [docs/DEPLOY.md](docs/DEPLOY.md).
+## Setup
+
+Deploy your own copy to Cloudflare:
+
+- **One click:**
+
+  [![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/hannta/garmin-connect-personal-api-mcp)
+
+- **Manual:** follow [docs/DEPLOY.md](docs/DEPLOY.md).
+
+Then [connect your MCP client](docs/DEPLOY.md#5-connect-a-client), such as Claude,
+ChatGPT, Cursor or VS Code.
 
 ## Tools
 
