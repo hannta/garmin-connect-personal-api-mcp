@@ -2,9 +2,19 @@
   "activityId": 10000000003,
   "activityName": "Intervals 10 x 400 m",
   "description": "",
-  "activityTypeDTO": { "typeId": 1, "typeKey": "running", "parentTypeId": 17 },
-  "timeZoneUnitDTO": { "timeZone": "Europe/Helsinki" },
-  "metadataDTO": { "lapCount": 25, "manualActivity": false, "personalRecord": false },
+  "activityTypeDTO": {
+    "typeId": 1,
+    "typeKey": "running",
+    "parentTypeId": 17
+  },
+  "timeZoneUnitDTO": {
+    "timeZone": "Europe/Helsinki"
+  },
+  "metadataDTO": {
+    "lapCount": 25,
+    "manualActivity": false,
+    "personalRecord": true
+  },
   "summaryDTO": {
     "startTimeLocal": "2026-03-03T17:00:00.0",
     "startTimeGMT": "2026-03-03T15:00:00.0",
@@ -41,7 +51,17 @@
     "avgGradeAdjustedSpeed": 3.1,
     "differenceBodyBattery": -14,
     "endLatitude": 60.0,
-    "endLongitude": 25.0
+    "endLongitude": 25.0,
+    "minTemperature": 4.0,
+    "maxTemperature": 9.0,
+    "minRespirationRate": 18.2,
+    "maxRespirationRate": 42.7,
+    "minElevation": 95.2,
+    "maxElevation": 131.8,
+    "maxRunCadence": 196.0,
+    "waterEstimated": 640.0,
+    "aerobicTrainingEffectMessage": "IMPROVING_VO2_MAX_15",
+    "anaerobicTrainingEffectMessage": "MAINTAINING_ANAEROBIC_FITNESS_10"
   },
   "locationName": "Example City",
   "splitSummaries": [
@@ -67,7 +87,9 @@
       "maxHR": 178.0,
       "averagePower": 380.0,
       "averageRunCadence": 182.0,
-      "avgGradeAdjustedSpeed": 4.78
+      "avgGradeAdjustedSpeed": 4.78,
+      "avgStepLength": 1.3245,
+      "avgStepFrequency": 182.5
     },
     {
       "splitType": "INTERVAL_RECOVERY",

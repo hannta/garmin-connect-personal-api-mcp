@@ -8,15 +8,28 @@ import type {
   ActivityDetail,
   ActivityStreams,
   ActivitySummary,
+  ActivityWorkout,
+  BodyBatteryDay,
+  DailyHeartRate,
+  DailyHydration,
+  DailyNutritionSummary,
   DailySleep,
+  DailySteps,
+  DailyStress,
   DailySummary,
   DailySummariesResponse,
+  FitnessAge,
   HeartRateZones,
   HrvDay,
   HrvRangeResponse,
   HrvSummary,
+  MenstrualCycleSummary,
+  MenstrualDayView,
   ProfileSettings,
+  Spo2Day,
+  WeightGoalsResponse,
   WeightRangeResponse,
+  WellnessActivitySummary,
 } from './types';
 
 // Garmin's own per-request maximums (tested 2026-11-02); tools may allow less.
@@ -29,6 +42,12 @@ export const LIMITS = {
   activitySearchMaxResults: 100,
   activitySearchDefaultResults: 20,
   streamMaxPoints: 500,
+  stepsRangeDays: 28,
+  stressRangeDays: 28,
+  bodyBatteryRangeDays: 31,
+  hydrationRangeDays: 31,
+  wellnessActivityRangeDays: 366,
+  weightGoalRangeDays: 366,
 } as const;
 
 function activityIdPath(activityId: number): string {
@@ -60,10 +79,20 @@ export async function getDailySummaries(
   return response.data ?? [];
 }
 
-/** Sleep is keyed by the wake-up date: `date` = the morning the night ended. */
-export async function getSleep(client: GarminClient, date: string): Promise<DailySleep> {
+/**
+ * One night, keyed by the wake-up date (the morning the night ended); null without data.
+ * Reads the range endpoint for that one date: it returns the same fields as
+ * `/sleep/dailySleep` plus the day's naps and breathing disruptions (checked 2026-11-03).
+ */
+export async function getSleep(client: GarminClient, date: string): Promise<DailySleep | null> {
   parseIsoDate(date);
-  return client.getJson('/sleep-service/sleep/dailySleep', { date }, `sleep for ${date}`);
+  const response = await client.getJson<DailySleep[] | null>(
+    '/sleep-service/sleep/dailySleepSummariesByDate',
+    { startDate: date, endDate: date },
+    `sleep for ${date}`,
+  );
+  const nights = Array.isArray(response) ? response : [];
+  return nights.find((night) => night.calendarDate === date) ?? nights[0] ?? null;
 }
 
 /** One entry per night (wake-up date), oldest first; same fields as `getSleep`. */
@@ -167,5 +196,163 @@ export async function getActivityStreams(
     `/activity-service/activity/${activityIdPath(activityId)}/details`,
     { maxChartSize },
     `streams for activity ${activityId}`,
+  );
+}
+
+/** Charged / drained, samples and the events (sleep, activities, …) per day. */
+export async function getBodyBatteryRange(
+  client: GarminClient,
+  start: string,
+  end: string,
+): Promise<BodyBatteryDay[]> {
+  validateRange(start, end, LIMITS.bodyBatteryRangeDays);
+  const response = await client.getJson<BodyBatteryDay[] | null>(
+    '/wellness-service/wellness/bodyBattery/reports/daily',
+    { startDate: start, endDate: end },
+    `Body Battery ${start} – ${end}`,
+  );
+  return Array.isArray(response) ? response : [];
+}
+
+export async function getStressRange(
+  client: GarminClient,
+  start: string,
+  end: string,
+): Promise<DailyStress[]> {
+  validateRange(start, end, LIMITS.stressRangeDays);
+  const response = await client.getJson<DailyStress[] | null>(
+    `/usersummary-service/stats/stress/daily/${start}/${end}`,
+    {},
+    `stress ${start} – ${end}`,
+  );
+  return Array.isArray(response) ? response : [];
+}
+
+export async function getStepsRange(
+  client: GarminClient,
+  start: string,
+  end: string,
+): Promise<DailySteps[]> {
+  validateRange(start, end, LIMITS.stepsRangeDays);
+  const response = await client.getJson<DailySteps[] | null>(
+    `/usersummary-service/stats/steps/daily/${start}/${end}`,
+    {},
+    `steps ${start} – ${end}`,
+  );
+  return Array.isArray(response) ? response : [];
+}
+
+/** All-day heart rate: resting / min / max and samples every 2 minutes. */
+export async function getDailyHeartRate(
+  client: GarminClient,
+  date: string,
+): Promise<DailyHeartRate> {
+  parseIsoDate(date);
+  return client.getJson(
+    '/wellness-service/wellness/dailyHeartRate',
+    { date },
+    `heart rate for ${date}`,
+  );
+}
+
+export async function getSpo2(client: GarminClient, date: string): Promise<Spo2Day> {
+  parseIsoDate(date);
+  return client.getJson(
+    `/wellness-service/wellness/daily/spo2acclimation/${date}`,
+    {},
+    `SpO2 for ${date}`,
+  );
+}
+
+export async function getFitnessAge(client: GarminClient, date: string): Promise<FitnessAge> {
+  parseIsoDate(date);
+  return client.getJson(`/fitnessage-service/fitnessage/v2/${date}`, {}, `fitness age for ${date}`);
+}
+
+export async function getWeightGoals(
+  client: GarminClient,
+  start: string,
+  end: string,
+): Promise<WeightGoalsResponse | null> {
+  validateRange(start, end, LIMITS.weightGoalRangeDays);
+  return client.getOptionalJson(
+    `/goal-service/goal/user/effective/weightgoal/${start}/${end}`,
+    {},
+    `weight goals ${start} – ${end}`,
+  );
+}
+
+// The endpoints below returned no data for the owner's account (2026-11-03); their
+// types follow Garmin's OpenAPI spec. Empty responses (204) are null.
+
+export async function getHydrationRange(
+  client: GarminClient,
+  start: string,
+  end: string,
+): Promise<DailyHydration[] | null> {
+  validateRange(start, end, LIMITS.hydrationRangeDays);
+  return client.getOptionalJson(
+    `/usersummary-service/stats/hydration/daily/${start}/${end}`,
+    {},
+    `hydration ${start} – ${end}`,
+  );
+}
+
+export async function getWellnessActivities(
+  client: GarminClient,
+  start: string,
+  end: string,
+): Promise<WellnessActivitySummary[] | null> {
+  validateRange(start, end, LIMITS.wellnessActivityRangeDays);
+  return client.getOptionalJson(
+    `/wellnessactivity-service/activity/summary/range/${start}/${end}`,
+    {},
+    `wellness activities ${start} – ${end}`,
+  );
+}
+
+export async function getFoodLog(
+  client: GarminClient,
+  date: string,
+): Promise<DailyNutritionSummary | null> {
+  parseIsoDate(date);
+  return client.getOptionalJson(`/nutrition-service/food/logs/${date}`, {}, `food log for ${date}`);
+}
+
+export async function getMenstrualSummary(
+  client: GarminClient,
+  date: string,
+): Promise<MenstrualCycleSummary | null> {
+  parseIsoDate(date);
+  return client.getOptionalJson(
+    `/periodichealth-service/menstrualcycle/summary/${date}`,
+    {},
+    `menstrual cycle for ${date}`,
+  );
+}
+
+export async function getMenstrualDay(
+  client: GarminClient,
+  date: string,
+  today: string,
+): Promise<MenstrualDayView | null> {
+  parseIsoDate(date);
+  parseIsoDate(today);
+  return client.getOptionalJson(
+    `/periodichealth-service/menstrualcycle/dayview/${date}`,
+    { todayDate: today },
+    `menstrual cycle day ${date}`,
+  );
+}
+
+/** The structured workout an activity was started from; `[]` if none. */
+export async function getActivityWorkouts(
+  client: GarminClient,
+  activityId: number,
+): Promise<ActivityWorkout[] | null> {
+  return client.getOptionalJson(
+    `/activity-service/activity/${activityIdPath(activityId)}/workouts`,
+    {},
+    `workouts for activity ${activityId}`,
   );
 }

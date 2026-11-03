@@ -87,6 +87,7 @@ describe('garmin_get_daily_summaries', () => {
     expect(query(DAILY)).toEqual({ startDate: '2026-03-01', endDate: '2026-03-02' });
     expect(result.days.map((day) => day.date)).toEqual(['2026-03-01', '2026-03-02']);
     expect(result.days[0]?.resting_hr_bpm).toEqual(expect.any(Number));
+    expect(result.days[0]).toMatchObject({ calories_total_kcal: 2500, calories_active_kcal: 700 });
     expect(result.summary.resting_hr_bpm?.days).toBe(2);
   });
 
@@ -107,6 +108,8 @@ describe('garmin_get_sleep_summaries', () => {
     expect(result.nights.map((night) => night.date)).toEqual(['2026-03-01', '2026-03-02']);
     const last = result.nights[1];
     expect(last).toMatchObject({ duration_min: 435, bedtime: '23:10', wake_time: '06:50' });
+    expect(result.nights[0]?.nap_min).toBe(20);
+    expect(last?.nap_min).toBeNull();
     expect(result.summary.duration_min).toMatchObject({ min: 400, max: 435, days: 2 });
   });
 

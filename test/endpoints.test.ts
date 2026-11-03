@@ -59,13 +59,14 @@ describe('daily data', () => {
   });
 
   it('reads sleep by wake-up date', async () => {
-    const { client, request } = setup(fixture('sleep.json'));
+    const { client, request } = setup([fixture('sleep.json')]);
     const sleep = await getSleep(client, '2026-03-02');
     expect(request()).toEqual({
-      path: '/sleep-service/sleep/dailySleep',
-      query: { date: '2026-03-02' },
+      path: '/sleep-service/sleep/dailySleepSummariesByDate',
+      query: { startDate: '2026-03-02', endDate: '2026-03-02' },
     });
-    expect(sleep.sleepScores?.overall?.value).toBe(81);
+    expect(sleep?.sleepScores?.overall?.value).toBe(81);
+    await expect(getSleep(setup([]).client, '2026-03-02')).resolves.toBeNull();
   });
 
   it('reads one night of HRV and a range', async () => {

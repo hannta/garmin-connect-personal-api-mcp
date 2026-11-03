@@ -78,4 +78,13 @@ describe('GarminClient', () => {
 
     await expect(client.getJson('/x')).rejects.toMatchObject({ code: 'invalid_response' });
   });
+
+  it('returns null for an empty response only when asked to', async () => {
+    const empty = () => new Response(null, { status: 204 });
+    const optional = makeClient(mockFetch([empty]).fetch).client;
+    await expect(optional.getOptionalJson('/x')).resolves.toBeNull();
+
+    const required = makeClient(mockFetch([empty]).fetch).client;
+    await expect(required.getJson('/x')).rejects.toMatchObject({ code: 'invalid_response' });
+  });
 });

@@ -4,8 +4,15 @@
     "activityName": "Long run",
     "startTimeLocal": "2026-03-01 09:30:00",
     "startTimeGMT": "2026-03-01 07:30:00",
-    "activityType": { "typeId": 1, "typeKey": "running", "parentTypeId": 17 },
-    "eventType": { "typeId": 9, "typeKey": "uncategorized" },
+    "activityType": {
+      "typeId": 1,
+      "typeKey": "running",
+      "parentTypeId": 17
+    },
+    "eventType": {
+      "typeId": 9,
+      "typeKey": "uncategorized"
+    },
     "distance": 21097.5,
     "duration": 6330.0,
     "elapsedDuration": 6400.0,
@@ -59,7 +66,11 @@
     "activityName": "Strength",
     "startTimeLocal": "2026-02-28 18:00:00",
     "startTimeGMT": "2026-02-28 16:00:00",
-    "activityType": { "typeId": 13, "typeKey": "strength_training", "parentTypeId": 29 },
+    "activityType": {
+      "typeId": 13,
+      "typeKey": "strength_training",
+      "parentTypeId": 29
+    },
     "distance": 0.0,
     "duration": 2700.0,
     "averageHR": 102.0,
@@ -68,6 +79,28 @@
     "anaerobicTrainingEffect": 0.4,
     "activityTrainingLoad": 25.0,
     "lapCount": 1,
-    "manualActivity": false
+    "manualActivity": false,
+    "totalSets": 6,
+    "activeSets": 6,
+    "totalReps": 45,
+    "summarizedExerciseSets": [
+      {
+        "category": "SQUAT",
+        "subCategory": "GOBLET_SQUAT",
+        "reps": 30,
+        "volume": 480000,
+        "duration": 300000,
+        "sets": 3,
+        "maxWeight": 16000
+      },
+      {
+        "category": "PLANK",
+        "reps": 15,
+        "volume": 0,
+        "duration": 180000,
+        "sets": 3,
+        "maxWeight": 0
+      }
+    ]
   }
 ]

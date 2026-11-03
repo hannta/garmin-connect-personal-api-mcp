@@ -74,10 +74,22 @@ Found via the endpoint list of Garmin's Python client
 | `GET /activitylist-service/activities/search/activities?…&limit`       | 100 per page (~470 KB, < 1 ms to parse)                                       | 1000: 500      |
 | `GET /fitnessage-service/fitnessage/v2/{date}`                         | single date; components: resting HR, BMI, vigorous days / minutes — no VO2max | —              |
 
-Other endpoints in that client, not tested: steps, stress and hydration ranges
-(`/usersummary-service/stats/{steps,stress,hydration}/daily/{start}/{end}`), SpO2
-(`/wellness-service/wellness/daily/spo2acclimation/{date}`), wellness activities, weight
-goals, food logs, menstrual cycle.
+Other endpoints in that client, tested 2026-11-03 (largest range per request):
+
+| Endpoint                                                             | Range limit       | On the owner's account                                                   |
+| -------------------------------------------------------------------- | ----------------- | ------------------------------------------------------------------------ |
+| `GET /usersummary-service/stats/steps/daily/{start}/{end}`           | 28 days (29: 400) | steps, goal, distance per day                                            |
+| `GET /usersummary-service/stats/stress/daily/{start}/{end}`          | 28 days (29: 400) | overall level + rest / low / medium / high durations                     |
+| `GET /usersummary-service/stats/hydration/daily/{start}/{end}`       | 31 days (32: 400) | `[]`                                                                     |
+| `GET /wellness-service/wellness/bodyBattery/reports/daily?…`         | 31 days (32: 400) | charged, drained, samples, activity events; `chunks=N` sets sample count |
+| `GET /wellnessactivity-service/activity/summary/range/{start}/{end}` | 366 days worked   | `[]`                                                                     |
+| `GET /goal-service/goal/user/effective/weightgoal/{start}/{end}`     | 366 days worked   | one goal (grams)                                                         |
+| `GET /wellness-service/wellness/daily/spo2acclimation/{date}`        | single date       | averages null (SpO2 not recorded), hourly + altitude arrays              |
+| `GET /nutrition-service/food/logs/{date}`                            | single date       | goals only, no meals                                                     |
+| `GET /periodichealth-service/menstrualcycle/summary/{date}`          | single date       | 204 No Content                                                           |
+
+Body Battery activity events have `eventType`, `eventStartTimeGmt`, `timezoneOffset`,
+`durationInMilliseconds`, `bodyBatteryImpact`, `feedbackType` and `shortFeedback`.
 
 ## Activity details (streams) endpoint
 
@@ -141,3 +153,39 @@ Decoded with `@garmin/fitsdk` 21.218.0 + `fflate` 0.8.3 (Node 24, Apple Silicon)
       in Garmin Connect not available to test — see point 5)
 - [x] Read the Personal API terms — confirmed OK by the owner
 - [ ] Write synthetic fixtures from these shapes (can be done at the start of Phase 1)
+
+## OpenAPI spec (2026-11-03)
+
+The Swagger page (developer.garmin.com/gc-developer-program/personal/swagger-docs/)
+embeds the full OpenAPI 3.0.1 spec: 26 paths, 109 schemas, with field descriptions and
+units. Saved locally as `discovery/raw/openapi.json` (git-ignored).
+
+- **Field names:** every field in our recorded responses (8 endpoints) is in the spec.
+- **Types:** dates / times are objects in the spec (`ConnectDate` `{date, localDate}`,
+  `LocalTime` `{hour, minute}`) but strings in real responses (`"2020-01-09"`,
+  `"07:00:00"`).
+- **Gaps:** enum values are missing for menstrual `currentPhase` (integer), `flow`,
+  `symptoms`, `moods`.
+- **Not in the spec:** `/activity-service/activity/{id}/details` (streams) — works, but
+  undocumented.
+- **Unused spec paths:** FIT download (behind `ENABLE_FIT_LAPS`), the older
+  `/usersummary-service/usersummary/daily`, and `/weight-service/weight/all` (individual
+  weigh-ins).
+- **Workouts:** a Garmin-suggested long run returned one workout (`sport: GENERIC`,
+  `workoutPhrase: LONG_WORKOUT`, no steps); field names match the spec.
+
+## Spec audit of the earlier endpoints (2026-11-03)
+
+- **Weight:** the spec says `weight` is in kilograms; real values are grams (7 digits,
+  e.g. 72400.0).
+- **Sleep:** `/sleep/dailySleepSummariesByDate` for one date returns exactly the same
+  fields and values as `/sleep/dailySleep`, plus `dailyNapDTOS` (nap times, offset in
+  minutes, feedback), `breathingDisruptionSeverity` and `kidSleepNote`. The single-night
+  endpoint only has the nap total.
+- **Strength:** activity search has `summarizedExerciseSets` (category, sets, reps,
+  volume g × reps, max weight g, duration ms) and total sets / reps; activity details
+  don't.
+- **In the spec, empty in real data:** `vO2MaxValue`, `lactateThresholdBpm`,
+  `trainingStressScore`, `maxAvgPower_*` (activity search); `heartRate.alertCount`,
+  `bodyBattery.endOfDayValue`, `calories.consumedValue` (daily summary, likely only
+  when there are alerts / logged food).

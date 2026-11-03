@@ -1,0 +1,26 @@
+[
+  {
+    "userId": 1,
+    "calendarDate": "2026-03-01",
+    "valueInML": 2250,
+    "goalInML": 3000,
+    "lastEntryTimestampLocal": "2026-03-01T20:10:00.0",
+    "sweatLossInML": 820,
+    "activityIntakeInML": 500
+  },
+  {
+    "userId": 1,
+    "calendarDate": "2026-02-28",
+    "valueInML": 1800.4,
+    "goalInML": 3000,
+    "sweatLossInML": 0,
+    "activityIntakeInML": 0
+  },
+  {
+    "userId": 1,
+    "calendarDate": "2026-03-02",
+    "valueInML": 0,
+    "goalInML": 3000,
+    "sweatLossInML": 0
+  }
+]

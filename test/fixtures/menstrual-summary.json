@@ -1,0 +1,33 @@
+{
+  "startDate": { "date": "2026-02-16T00:00:00.000Z", "localDate": "2026-02-16" },
+  "endDate": null,
+  "cycleType": "REGULAR",
+  "currentPhase": 2,
+  "dayInCycle": 15,
+  "daysUntilNextPhase": 2,
+  "lengthOfCurrentPhase": 6,
+  "periodLength": 5,
+  "fertileWindowStart": 11,
+  "lengthOfFertileWindow": 6,
+  "lutealPhaseStart": 17,
+  "predictedCycle": false,
+  "predictedCycleLength": 29,
+  "predictedOvulationDate": "2026-03-02",
+  "isSkinTempMct": true,
+  "feedbackPhrase": "FERTILE_WINDOW",
+  "pregnancyCycle": false,
+  "educationContentMod": 3,
+  "overlapCycleList": [],
+  "analysis": {
+    "perimenopauseDetected": false,
+    "cycleTypeAnalysis": {
+      "cycleType": "REGULAR",
+      "medianCycleLength": 29,
+      "medianCycleLengthClassifier": "NORMAL",
+      "cycleVariability": 2,
+      "cycleVariabilityClassifier": "LOW",
+      "isAtypical": false,
+      "hasAmenorrhea": false
+    }
+  }
+}

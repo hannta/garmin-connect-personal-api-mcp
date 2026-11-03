@@ -9,12 +9,17 @@ import { createToolContext, type ToolContext } from './tools/context';
 import type { ToolDefinition } from './tools/define';
 import { getActivityTool } from './tools/get-activity';
 import { getActivityStreamsTool } from './tools/get-activity-streams';
+import { getFitnessAgeTool, getHeartRateZonesTool, getWeightGoalsTool } from './tools/fitness';
 import { getDayTool } from './tools/get-day';
 import { getDaysTool } from './tools/get-days';
+import { getHeartRateTool } from './tools/get-heart-rate';
 import { getHrvTool } from './tools/get-hrv';
 import { getProfileTool } from './tools/get-profile';
 import { getSleepTool } from './tools/get-sleep';
+import { getSpo2Tool } from './tools/get-spo2';
 import { getWeightTool } from './tools/get-weight';
+import { getMenstrualCycleTool, getMenstrualDayTool } from './tools/menstrual';
+import { getFoodLogTool, getHydrationTool } from './tools/nutrition';
 import { runTool } from './tools/result';
 import { searchActivitiesTool } from './tools/search-activities';
 import {
@@ -22,14 +27,17 @@ import {
   getHrvSummariesTool,
   getSleepSummariesTool,
 } from './tools/summaries';
+import { getBodyBatteryTool, getStepsTool, getStressTool } from './tools/wellness';
+import { getWellnessActivitiesTool } from './tools/wellness-activities';
+import { getActivityWorkoutsTool } from './tools/workouts';
 
 export const SERVER_NAME = 'garmin-connect-personal-api-mcp';
 export const SERVER_VERSION = '0.1.0';
 
 const INSTRUCTIONS = [
   "Read-only access to the user's Garmin Connect data (activities, sleep, HRV, daily",
-  'recovery metrics, heart-rate zones). All values are metric; every field name includes',
-  "its unit. Dates are YYYY-MM-DD in the user's time zone, and omitted dates mean today.",
+  'recovery metrics, Body Battery, stress, heart rate, weight, heart-rate zones). All',
+  "values are metric; every field name includes its unit. Dates are YYYY-MM-DD in the user's time zone, and omitted dates mean today.",
   'Sleep and HRV are keyed by the wake-up date. Start with garmin_get_day for readiness',
   'questions, garmin_get_days for trends over a range, and garmin_search_activities to',
   'find activities. Range tools default to the last 7 days and make one Garmin request',
@@ -37,8 +45,9 @@ const INSTRUCTIONS = [
   'calls. Range results include plain average / min / max statistics in `summary`; any',
   'further analysis is yours.',
   'Not available from the Garmin Personal API: Training Readiness, Training Status,',
-  'VO2max, personal records, gear and per-lap data. Say so instead of guessing, and',
-  'label any readiness estimate you make from HRV, sleep and load as your own estimate.',
+  'VO2max history, a personal-records list, gear and per-lap data. Say so instead of',
+  'guessing, and label any readiness estimate you make from HRV, sleep and load as your',
+  'own estimate.',
 ].join(' ');
 
 export interface ServerOptions {
@@ -78,6 +87,20 @@ export function createServer(env: Env, options: ServerOptions = {}): McpServer {
   register(server, context, getSleepSummariesTool);
   register(server, context, getHrvSummariesTool);
   register(server, context, getWeightTool);
+  register(server, context, getBodyBatteryTool);
+  register(server, context, getStressTool);
+  register(server, context, getStepsTool);
+  register(server, context, getHeartRateTool);
+  register(server, context, getSpo2Tool);
+  register(server, context, getFitnessAgeTool);
+  register(server, context, getHeartRateZonesTool);
+  register(server, context, getWeightGoalsTool);
+  register(server, context, getHydrationTool);
+  register(server, context, getWellnessActivitiesTool);
+  register(server, context, getFoodLogTool);
+  register(server, context, getMenstrualCycleTool);
+  register(server, context, getMenstrualDayTool);
+  register(server, context, getActivityWorkoutsTool);
   register(server, context, getActivityStreamsTool);
   return server;
 }

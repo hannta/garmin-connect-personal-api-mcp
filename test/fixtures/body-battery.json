@@ -1,0 +1,62 @@
+[
+  {
+    "date": "2026-03-02",
+    "charged": 40,
+    "drained": 15,
+    "startTimestampGMT": "2026-03-01T22:00:00.0",
+    "endTimestampGMT": "2026-03-02T22:00:00.0",
+    "startTimestampLocal": "2026-03-02T00:00:00.0",
+    "endTimestampLocal": "2026-03-03T00:00:00.0",
+    "bodyBatteryValuesArray": [
+      [1772402400000, 30],
+      [1772404200000, 34],
+      [1772427600000, 70],
+      [1772438400000, 62]
+    ],
+    "bodyBatteryValueDescriptorDTOList": [
+      { "bodyBatteryValueDescriptorIndex": 0, "bodyBatteryValueDescriptorKey": "timestamp" },
+      { "bodyBatteryValueDescriptorIndex": 1, "bodyBatteryValueDescriptorKey": "bodyBatteryLevel" }
+    ],
+    "bodyBatteryDynamicFeedbackEvent": {
+      "eventTimestampGmt": "2026-03-02T07:30:00.0",
+      "bodyBatteryLevel": "HIGH",
+      "feedbackShortType": "MORNING_RECOVERED",
+      "feedbackLongType": "MORNING_RECOVERED"
+    },
+    "bodyBatteryActivityEvent": [
+      {
+        "eventType": "SLEEP",
+        "eventStartTimeGmt": "2026-03-01T21:30:00.0",
+        "timezoneOffset": 7200000,
+        "durationInMilliseconds": 27900000,
+        "bodyBatteryImpact": 42,
+        "feedbackType": "NONE",
+        "shortFeedback": "NONE"
+      }
+    ],
+    "endOfDayBodyBatteryDynamicFeedbackEvent": null
+  },
+  {
+    "date": "2026-03-01",
+    "charged": 55,
+    "drained": 52,
+    "bodyBatteryValuesArray": [[1772316000000, 25]],
+    "bodyBatteryActivityEvent": [
+      {
+        "eventType": "ACTIVITY",
+        "eventStartTimeGmt": "2026-03-01T07:00:00.0",
+        "timezoneOffset": 7200000,
+        "durationInMilliseconds": 3600000,
+        "bodyBatteryImpact": -12,
+        "feedbackType": "EXERCISE_TRAINING_EFFECT_3",
+        "shortFeedback": "IMPROVING_AEROBIC_BASE"
+      }
+    ],
+    "endOfDayBodyBatteryDynamicFeedbackEvent": {
+      "eventTimestampGmt": "2026-03-01T21:00:00.0",
+      "bodyBatteryLevel": "LOW",
+      "feedbackShortType": "SLEEP_TIME_PASSED_RECOVERING",
+      "feedbackLongType": "SLEEP_TIME_PASSED_RECOVERING"
+    }
+  }
+]

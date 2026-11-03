@@ -29,7 +29,7 @@ What Strava adds is its own derived metrics and social features.
 | Athlete zones, profile                       | ✅ `garmin_get_profile`                                                                                |
 | Best efforts                                 | ✅ Fastest splits (1 km … marathon) in `garmin_search_activities` rows (later release; no PR endpoint) |
 | Streaks, fitness / freshness                 | ✅ Weekly totals with `group_by: "week"` (later release; Garmin training load, HR-zone time, volume)   |
-| Strength workout details                     | ❌ Not available (no sets endpoint; FIT sets not recorded by the device)                               |
+| Strength workout details                     | ⚠️ Sets, reps and weight per exercise category (`summarizedExerciseSets`); no individual sets          |
 | Gear / shoe mileage                          | ❌ No gear endpoint in the Personal API                                                                |
 | Training plans, segments, KOMs, kudos, clubs | ❌ Strava-only; not needed for coaching                                                                |
 
@@ -266,12 +266,41 @@ planned as tools.
 **Optional later feature:** per-lap rows in `garmin_get_activity` from FIT files, behind
 `ENABLE_FIT_LAPS` (see below).
 
-**Possible later:**
+### Full endpoint coverage
 
-- `garmin_get_food_log` (fuelling), if someone needs it.
-- Planned workout + planned-vs-actual in `garmin_get_activity`, via
-  `/activity/{id}/workouts`, for workouts created in Garmin Connect. Untested — needs a
-  sample response from someone who uses them.
+Matches the tool set of the two closest projects (same names), so every Personal API
+endpoint has a tool. Same range rules as above; maximums measured 2026-11-03.
+
+| Tool                                                      | Garmin endpoint                                                  | Input (max per call)    | Output                                                                                                                           | Owner's account |
+| --------------------------------------------------------- | ---------------------------------------------------------------- | ----------------------- | -------------------------------------------------------------------------------------------------------------------------------- | --------------- |
+| `garmin_get_body_battery(start?, end?, include_samples?)` | `/wellness-service/wellness/bodyBattery/reports/daily`           | range (31 days, Garmin) | Per day: charged, drained, events behind them (sleep, each activity: start, duration, impact, feedback). Samples only on request | data            |
+| `garmin_get_stress(start?, end?)`                         | `/usersummary-service/stats/stress/daily/{start}/{end}`          | range (28 days, Garmin) | Per day: overall level, minutes at rest / low / medium / high                                                                    | data            |
+| `garmin_get_steps(start?, end?)`                          | `/usersummary-service/stats/steps/daily/{start}/{end}`           | range (28 days, Garmin) | Per day: steps, goal, distance (km)                                                                                              | data            |
+| `garmin_get_heart_rate(date?, include_samples?)`          | `/wellness-service/wellness/dailyHeartRate`                      | one date                | Resting / min / max HR, 7-day resting average; samples (averaged per 15 min) only on request                                     | data            |
+| `garmin_get_spo2(date?, include_samples?)`                | `/wellness-service/wellness/daily/spo2acclimation/{date}`        | one date                | Average / lowest / sleep SpO2, 7-day average, altitude acclimation; hourly averages only on request                              | empty values    |
+| `garmin_get_fitness_age(date?)`                           | `/fitnessage-service/fitnessage/v2/{date}`                       | one date                | Fitness age vs. chronological age, components (resting HR, BMI, vigorous days / minutes per week)                                | data            |
+| `garmin_get_weight_goals(start?, end?)`                   | `/goal-service/goal/user/effective/weightgoal/{start}/{end}`     | range (366 days)        | Goals in effect: target (kg), start date, tracking period                                                                        | 1 goal          |
+| `garmin_get_hydration(start?, end?)`                      | `/usersummary-service/stats/hydration/daily/{start}/{end}`       | range (31 days, Garmin) | Per day: intake, goal, sweat loss (ml)                                                                                           | empty           |
+| `garmin_get_wellness_activities(start?, end?)`            | `/wellnessactivity-service/activity/summary/range/{start}/{end}` | range (92 days)         | Wellness activities (e.g. breathing / meditation) with summary values and zone time                                              | empty           |
+| `garmin_get_food_log(date?)`                              | `/nutrition-service/food/logs/{date}`                            | one date                | Meals, logged foods, nutrients vs. daily goals                                                                                   | empty           |
+| `garmin_get_menstrual_cycle(date?)`                       | `/periodichealth-service/menstrualcycle/summary/{date}`          | one date                | Cycle phase, day, fertile window, predictions                                                                                    | no data (204)   |
+| `garmin_get_menstrual_day(date?)`                         | `/periodichealth-service/menstrualcycle/dayview/{date}`          | one date                | One day's logged symptoms, flow and cycle detail                                                                                 | no data         |
+| `garmin_get_activity_workouts(id)`                        | `/activity-service/activity/{id}/workouts`                       | activity ID             | The structured workout followed (steps, targets), for planned vs. actual                                                         | `[]`            |
+| `garmin_get_heart_rate_zones()`                           | `/biometric-service/heartRateZones/v2`                           | —                       | Same zones as `garmin_get_profile`, as its own tool so names match the other projects                                            | data            |
+
+- **Built from the spec:** hydration, wellness activities, food log and menstrual cycle
+  return no data on the owner's account, so their tools follow Garmin's OpenAPI spec
+  (Swagger page, extracted to `discovery/raw/openapi.json`). Dates and times accept
+  both the spec's objects and the strings Garmin really sends. Workouts are decoded
+  (HR = % max or bpm + 100, power = % FTP or watts + 1000, speed m/s → pace). Sexual
+  activity and sex drive logs are not returned. Fixtures are synthetic, from the spec.
+- **No duplicate fetching:** `garmin_get_day` also gets stress-level minutes and Body
+  Battery events from the daily summary it already reads (no extra request).
+- **Sensitive data:** menstrual-cycle tools return data only if the user tracks it in
+  Garmin Connect; nothing else changes (same sign-in, read-only).
+- **Not added:** `garmin_download_activity` (a remote server can't save to the user's
+  disk; FIT stays behind `ENABLE_FIT_LAPS`) and a single-date `garmin_get_daily_summary`
+  (`garmin_get_day` and `garmin_get_daily_summaries` cover it).
 
 **Known gaps (confirmed in Phase 0), documented in the README:**
 
@@ -280,7 +309,7 @@ planned as tools.
 - No gear endpoint, so no shoe mileage.
 - No personal-records endpoint; best efforts come from per-activity fastest splits and
   may differ slightly from Garmin's own PRs.
-- No strength sets.
+- No individual strength sets; activity search has totals per exercise category.
 
 ### FIT files and the free plan's 10 ms CPU limit
 
@@ -444,7 +473,37 @@ rules in Tools → Later releases):
 
 **Done when:** each tool is deployed and answers its example question from the phone.
 
-### Phase 6 — Polish + go public (optional)
+Deployed 2026-11-02 and tested from the Claude desktop app: 4 weeks of HRV and sleep
+(`garmin_get_days`), 12 weeks of weekly running volume and HR drift on a long run
+(streams) all answered correctly. Tool calls can exceed the free plan's CPU limit — see
+the CPU decision below.
+
+### Phase 6 — Full endpoint coverage
+
+Tools in Tools → Full endpoint coverage, in this order (most useful for coaching first):
+
+- [x] `garmin_get_body_battery`, plus Body Battery events in `garmin_get_day`
+- [x] `garmin_get_stress`, plus stress-level minutes in `garmin_get_day`
+- [x] `garmin_get_steps`
+- [x] `garmin_get_heart_rate`
+- [x] `garmin_get_fitness_age`
+- [x] `garmin_get_heart_rate_zones`
+- [x] `garmin_get_weight_goals`
+- [x] `garmin_get_spo2`
+- [x] `garmin_get_hydration`, `garmin_get_wellness_activities`, `garmin_get_food_log`
+      (pass-through, untested with real data)
+- [x] `garmin_get_menstrual_cycle`, `garmin_get_menstrual_day` (pass-through, untested)
+- [x] `garmin_get_activity_workouts` (pass-through, untested)
+- [x] README tool list, CHANGELOG, server instructions
+
+**Done when:** all 26 tools are deployed; the ones with data on the owner's account
+answer a question from Claude; the untested ones return Garmin's response cleanly.
+
+Tested 2026-11-03 against the owner's account from a local script (one request per tool,
+the 28-day stress limit, `no_data` for hydration, wellness activities, menstrual cycle
+and workouts); not yet deployed.
+
+### Phase 7 — Polish + go public (optional)
 
 - [ ] Tune tool descriptions based on real usage
 - [ ] Cache stable data (HR zones, profile)
@@ -523,7 +582,7 @@ rules in Tools → Later releases):
   last resort.
 - **Language (2026-11-01):** English for tool names, descriptions, output, errors and docs.
 - **Repository (2026-11-01):** `git@github.com:hannta/garmin-connect-personal-api-mcp.git`,
-  private until Phase 6.
+  private until Phase 7.
 - **Activity times (2026-11-01):** activities use their own local time and offset
   (from Garmin's local + GMT start times), not the profile time zone. The Garmin account
   time zone stays `Europe/Athens`: Garmin offers no Helsinki option, and the two are
@@ -548,5 +607,32 @@ rules in Tools → Later releases):
 - **Range calls (2026-11-02):** default 7 days; one Garmin request per source; a range
   over the endpoint's maximum returns an error asking Claude to split it, instead of
   the server splitting it.
+- **Match the other projects' tool set (2026-11-03):** add the 13 tools that
+  [trainingload-ai/garmin-personal-api-mcp](https://github.com/trainingload-ai/garmin-personal-api-mcp)
+  and [Mason-Levyy/garmin-personal-mcp](https://github.com/Mason-Levyy/garmin-personal-mcp)
+  both have, with the same names, plus `garmin_get_heart_rate_zones`. Supersedes "Not
+  now" in the tool-mirroring decision. Tools for data the owner doesn't track pass
+  Garmin's fields through instead of custom formatting.
+- **Free-plan CPU: document and monitor (2026-11-03).** Tool calls can exceed the free
+  plan's 10 ms CPU limit, mostly from OAuth, MCP SDK and zod overhead on fresh Worker
+  instances, which our own code can't reliably get under. No benchmarks in the docs:
+  README notes the limit, DEPLOY.md shows how to spot `exceededCpu`, and Workers Paid
+  is the fix if Cloudflare starts enforcing it.
 - **No cookie secret (2026-11-02):** `COOKIE_ENCRYPTION_KEY` dropped; the library's
   consent helpers provide CSRF protection.
+- **Spec-based tools instead of pass-through (2026-11-03):** Garmin's Swagger page
+  embeds the full OpenAPI spec. Its field names matched every real response we had (8
+  endpoints), so the five endpoints without data on the owner's account are formatted
+  like the others rather than passed through. Its date / time types (objects) don't
+  match reality (strings), so both are accepted. Extras from the spec: heart-rate alerts
+  and achievable fitness age.
+- **Spec audit of the earlier tools (2026-11-03):** no unit or meaning errors (the
+  spec's "weight in kilograms" is wrong: real values are grams, as the code assumes).
+  Added fields Garmin really sends: sleep score optimal ranges, sleep-need reasons and
+  the next night's need, naps with times, respiration range and breathing disruptions;
+  activity min/max elevation, temperature and respiration, max cadence, sweat loss,
+  training-effect messages, PR flag, strength sets per exercise category and per-interval
+  step length; calories, hydration, HR alert count and pre-sleep Body Battery in the
+  daily summary; training days in the profile. VO2max and lactate threshold are mapped
+  but empty in real data. `garmin_get_sleep` now reads the one-day range endpoint,
+  which returns the same fields plus naps and breathing disruptions.

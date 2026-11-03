@@ -1,8 +1,8 @@
 import { z } from 'zod';
 import { getSleep } from '../garmin/endpoints';
 import { GarminError } from '../garmin/errors';
-import type { DailySleep, SleepScoreItem } from '../garmin/types';
-import { garminGmtToLocalIso } from '../lib/dates';
+import type { DailyNap, DailySleep, SleepNeed, SleepScoreItem } from '../garmin/types';
+import { garminGmtToLocalIso, localIsoFromOffset } from '../lib/dates';
 import { formatHoursMinutes, round } from '../lib/units';
 import { dateInput, defineTool } from './define';
 
@@ -11,8 +11,10 @@ export const getSleepTool = defineTool({
   title: 'Get Garmin sleep',
   description: [
     'One night of sleep from Garmin: start and end time, total sleep, stages',
-    '(deep / light / REM / awake), sleep score with qualifiers, sleep need, average heart',
-    'rate, respiration, SpO2 and sleep stress.',
+    "(deep / light / REM / awake), sleep score with each component's optimal range, sleep",
+    'need with the reasons Garmin adjusted it (training, sleep history, HRV, naps), the next',
+    "night's sleep need, naps that day, average heart rate, respiration, SpO2, sleep stress",
+    'and breathing disruptions.',
     'Nights are keyed by the wake-up date: "last night" is today\'s date.',
   ].join(' '),
   inputSchema: z.object({
@@ -43,8 +45,62 @@ function stage(seconds: number | null | undefined, total: number) {
   };
 }
 
-function score(item: SleepScoreItem | null | undefined) {
-  return item ? { value: item.value, qualifier: item.qualifierKey } : null;
+type ScoreUnit = 'duration' | 'percent' | 'plain';
+
+/** A score component with its optimal range, e.g. REM { value: 19, optimal_pct: [21, 31] }. */
+function score(item: SleepScoreItem | null | undefined, unit: ScoreUnit = 'plain') {
+  if (!item) return null;
+  const { optimalStart: start, optimalEnd: end } = item;
+  const hasRange = typeof start === 'number' && typeof end === 'number';
+  // A range whose ends are equal (e.g. the total-duration target) is one value.
+  const optimal = <T>(format: (value: number) => T) =>
+    hasRange ? (start === end ? format(start) : [format(start), format(end)]) : null;
+  return {
+    value: item.value,
+    qualifier: item.qualifierKey,
+    optimal: unit === 'plain' ? optimal((value) => round(value, 1)) : null,
+    optimal_pct: unit === 'percent' ? optimal((value) => round(value)) : null,
+    optimal_duration: unit === 'duration' ? optimal((value) => formatHoursMinutes(value)) : null,
+  };
+}
+
+const NO_CHANGE = new Set(['NO_CHANGE', 'NONE']);
+const pad = (value: number) => String(value).padStart(2, '0');
+
+/** Sleep need (minutes) and what changed it; unchanged reasons are left out. */
+export function sleepNeed(need: SleepNeed | null | undefined) {
+  if (typeof need?.actual !== 'number') return null;
+  const reason = (value: string | null | undefined) =>
+    value && !NO_CHANGE.has(value) ? value : null;
+  const clock = (minutes: number | null | undefined) =>
+    typeof minutes === 'number'
+      ? `${pad(Math.floor(minutes / 60) % 24)}:${pad(Math.round(minutes % 60))}`
+      : null;
+  const bedtime = [clock(need.recommendedBedtimeStartMins), clock(need.recommendedBedtimeEndMins)];
+  return {
+    baseline: formatHoursMinutes((need.baseline ?? Number.NaN) * 60),
+    adjusted: formatHoursMinutes(need.actual * 60),
+    adjusted_min: need.actual,
+    feedback: need.feedback,
+    adjusted_for: {
+      training: reason(need.trainingFeedback),
+      sleep_history: reason(need.sleepHistoryAdjustment),
+      hrv: reason(need.hrvAdjustment),
+      naps: reason(need.napAdjustment),
+    },
+    recommended_bedtime: bedtime.every(Boolean) ? bedtime : null,
+  };
+}
+
+export function formatNap(nap: DailyNap) {
+  const offsetMs =
+    typeof nap.napStartTimeOffset === 'number' ? nap.napStartTimeOffset * 60_000 : null;
+  return {
+    start: localIsoFromOffset(nap.napStartTimestampGMT, offsetMs),
+    end: localIsoFromOffset(nap.napEndTimestampGMT, offsetMs),
+    duration: formatHoursMinutes(nap.napTimeSec),
+    feedback: nap.napFeedback,
+  };
 }
 
 export function formatSleep(sleep: DailySleep | null, date: string, timeZone: string) {
@@ -70,15 +126,16 @@ export function formatSleep(sleep: DailySleep | null, date: string, timeZone: st
       qualifier: scores?.overall?.qualifierKey,
       feedback: sleep.sleepScoreFeedback,
       insight: sleep.sleepScoreInsight,
+      personalized_insight: sleep.sleepScorePersonalizedInsight,
     },
     score_components: {
-      total_duration: score(scores?.totalDuration),
+      total_duration: score(scores?.totalDuration, 'duration'),
       stress: score(scores?.stress),
       awake_count: score(scores?.awakeCount),
       restlessness: score(scores?.restlessness),
-      deep_percentage: score(scores?.deepPercentage),
-      light_percentage: score(scores?.lightPercentage),
-      rem_percentage: score(scores?.remPercentage),
+      deep_percentage: score(scores?.deepPercentage, 'percent'),
+      light_percentage: score(scores?.lightPercentage, 'percent'),
+      rem_percentage: score(scores?.remPercentage, 'percent'),
     },
     stages: {
       deep: stage(sleep.deepSleepSeconds, total),
@@ -88,17 +145,16 @@ export function formatSleep(sleep: DailySleep | null, date: string, timeZone: st
     },
     awake_count: sleep.awakeCount,
     nap: sleep.napTimeSeconds ? formatHoursMinutes(sleep.napTimeSeconds) : null,
+    naps: sleep.dailyNapDTOS?.length ? sleep.dailyNapDTOS.map(formatNap) : null,
     avg_hr_bpm: round(sleep.avgHeartRate),
     avg_respiration_brpm: round(sleep.averageRespirationValue, 1),
+    lowest_respiration_brpm: round(sleep.lowestRespirationValue, 1),
+    highest_respiration_brpm: round(sleep.highestRespirationValue, 1),
+    breathing_disruptions: sleep.breathingDisruptionSeverity,
     avg_spo2_pct: round(sleep.averageSpO2Value),
     lowest_spo2_pct: round(sleep.lowestSpO2Value),
     avg_sleep_stress: round(sleep.avgSleepStress),
-    sleep_need: sleep.sleepNeed
-      ? {
-          baseline: formatHoursMinutes((sleep.sleepNeed.baseline ?? Number.NaN) * 60),
-          adjusted: formatHoursMinutes((sleep.sleepNeed.actual ?? Number.NaN) * 60),
-          feedback: sleep.sleepNeed.feedback,
-        }
-      : null,
+    sleep_need: sleepNeed(sleep.sleepNeed),
+    next_sleep_need: sleepNeed(sleep.nextSleepNeed),
   };
 }

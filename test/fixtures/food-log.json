@@ -1,0 +1,44 @@
+{
+  "mealDate": "2026-03-02",
+  "dayStartTime": "07:00:00",
+  "dayEndTime": "22:00:00",
+  "dailyNutritionContent": { "calories": 1450, "carbs": 190.5, "protein": 72.25, "fat": 41 },
+  "dailyNutritionGoals": {
+    "calories": 2400,
+    "adjustedCalories": 2950,
+    "carbs": 300,
+    "adjustedCarbs": 370,
+    "protein": 120,
+    "fat": 80
+  },
+  "mealDetails": [
+    {
+      "meal": { "mealId": 11, "mealName": "Breakfast", "defaultMealName": "BREAKFAST" },
+      "mealNutritionContent": { "calories": 650, "carbs": 95, "protein": 22, "fat": 18 },
+      "loggedFoods": [
+        {
+          "id": "x",
+          "logId": "00000000-0000-4000-8000-000000000003",
+          "mealId": 11,
+          "foodMetaData": { "foodId": "f1", "foodName": "Oatmeal", "brandName": null },
+          "servingQty": 2,
+          "mealTime": "07:00:00",
+          "nutritionContent": {
+            "calories": 150,
+            "carbs": 27,
+            "protein": 5,
+            "fat": 3,
+            "numberOfUnits": 40,
+            "servingUnit": "g"
+          }
+        }
+      ]
+    },
+    {
+      "meal": { "mealId": 12, "mealName": "Lunch" },
+      "mealNutritionContent": { "calories": 0 },
+      "loggedFoods": []
+    }
+  ],
+  "loggedFoodsWithServingSizes": []
+}

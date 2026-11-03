@@ -153,12 +153,28 @@ export function localIsoFromPair(
   const wallTime = localDate.toISOString().slice(0, 19);
   const gmtDate = parseGarminGmt(gmt);
   if (!gmtDate) return wallTime;
-  const offsetMinutes = Math.round((localDate.getTime() - gmtDate.getTime()) / 60_000);
+  return `${wallTime}${formatOffset(localDate.getTime() - gmtDate.getTime())}`;
+}
+
+/** ISO 8601 from a Garmin GMT value and a UTC offset in ms (Body Battery events). */
+export function localIsoFromOffset(
+  gmt: string | number | null | undefined,
+  offsetMs: number | null | undefined,
+): string | null {
+  const gmtDate = parseGarminGmt(gmt);
+  if (!gmtDate || typeof offsetMs !== 'number' || !Number.isFinite(offsetMs)) return null;
+  const wallTime = new Date(gmtDate.getTime() + offsetMs).toISOString().slice(0, 19);
+  return `${wallTime}${formatOffset(offsetMs)}`;
+}
+
+/** "+02:00" from an offset in milliseconds. */
+function formatOffset(offsetMs: number): string {
+  const offsetMinutes = Math.round(offsetMs / 60_000);
   const sign = offsetMinutes < 0 ? '-' : '+';
   const abs = Math.abs(offsetMinutes);
   const hh = String(Math.floor(abs / 60)).padStart(2, '0');
   const mm = String(abs % 60).padStart(2, '0');
-  return `${wallTime}${sign}${hh}:${mm}`;
+  return `${sign}${hh}:${mm}`;
 }
 
 /** Convenience: Garmin GMT value → local ISO string, or null. */
@@ -168,4 +184,43 @@ export function garminGmtToLocalIso(
 ): string | null {
   const date = parseGarminGmt(value);
   return date ? toLocalIso(date, timeZone) : null;
+}
+
+type SpecDate = string | { date?: string | null; localDate?: string | null } | null | undefined;
+
+/**
+ * "YYYY-MM-DD" from a Garmin date: real responses send strings, Garmin's OpenAPI spec
+ * describes { date (UTC), localDate }. Accepts both.
+ */
+export function garminDate(value: SpecDate): string | null {
+  const text = typeof value === 'string' ? value : (value?.localDate ?? value?.date);
+  return typeof text === 'string' && /^\d{4}-\d{2}-\d{2}/.test(text) ? text.slice(0, 10) : null;
+}
+
+/** "HH:MM" from "HH:MM[:SS]" or the spec's { hour, minute }. */
+export function garminTimeOfDay(
+  value: string | { hour?: number | null; minute?: number | null } | null | undefined,
+): string | null {
+  if (typeof value === 'string') return /^\d{2}:\d{2}/.test(value) ? value.slice(0, 5) : null;
+  if (typeof value?.hour !== 'number') return null;
+  const minute = typeof value.minute === 'number' ? value.minute : 0;
+  return `${String(value.hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
+}
+
+/**
+ * Local ISO time from a Garmin local + GMT timestamp pair, where each may be a string or
+ * the spec's { date (UTC) } object. Falls back to the GMT time in `timeZone`.
+ */
+export function garminTimestampToLocalIso(
+  local: SpecDate,
+  gmt: SpecDate,
+  timeZone: string,
+): string | null {
+  if (typeof local === 'string' && typeof gmt === 'string') return localIsoFromPair(local, gmt);
+  const utc =
+    typeof gmt === 'string' ? gmt : (gmt?.date ?? (typeof local === 'object' ? local?.date : null));
+  if (typeof utc !== 'string') return null;
+  // Strings with an offset or Z are ISO; Garmin's own GMT strings have none.
+  const date = /[zZ]|[+-]\d{2}:\d{2}$/.test(utc) ? new Date(utc) : parseGarminGmt(utc);
+  return date && !Number.isNaN(date.getTime()) ? toLocalIso(date, timeZone) : null;
 }

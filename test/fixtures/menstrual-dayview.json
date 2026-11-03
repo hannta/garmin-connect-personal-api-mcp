@@ -1,0 +1,27 @@
+{
+  "dayLog": {
+    "calendarDate": "2026-02-17",
+    "userProfilePk": 1,
+    "flow": "MEDIUM",
+    "symptoms": ["CRAMPS", "FATIGUE"],
+    "moods": ["CALM"],
+    "discharge": [],
+    "ovulationDay": false,
+    "notes": "Easy run felt heavy",
+    "sexDrive": "LOW",
+    "sexualActivity": "NONE",
+    "hasBabyMovement": false,
+    "hasGlucoseLog": false
+  },
+  "daySummary": {
+    "startDate": "2026-02-16",
+    "currentPhase": 1,
+    "dayInCycle": 2,
+    "periodLength": 5,
+    "fertileWindowStart": 11,
+    "lengthOfFertileWindow": 6,
+    "lutealPhaseStart": 17,
+    "predictedCycleLength": 29
+  },
+  "weightGoals": null
+}

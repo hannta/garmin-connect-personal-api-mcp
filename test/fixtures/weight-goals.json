@@ -1,0 +1,16 @@
+{
+  "userGoals": [
+    {
+      "userGoalCategory": "WEIGHT",
+      "userGoalType": "WEIGHT_GRAMS",
+      "startDate": "2026-01-01",
+      "endDate": null,
+      "goalName": null,
+      "goalValue": 72000,
+      "updateDate": "2026-01-01T08:00:00.0",
+      "createDate": "2026-01-01T08:00:00.0",
+      "trackingPeriodType": "DAILY"
+    }
+  ],
+  "userGoalRanges": null
+}

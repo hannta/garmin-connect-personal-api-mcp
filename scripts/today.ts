@@ -64,6 +64,7 @@ async function main(): Promise<void> {
   }
 
   if (typeof sleep === 'string') console.log(`Sleep: ${sleep}`);
+  else if (sleep === null) console.log('Sleep: no data for the night ending on this date');
   else {
     console.log('Sleep (night ending on this date):', {
       score: sleep.sleepScores?.overall?.value ?? null,

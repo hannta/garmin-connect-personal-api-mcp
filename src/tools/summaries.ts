@@ -20,16 +20,16 @@ export const MAX_DAYS = {
 } as const;
 
 /** Garmin reports "no data" as 0 for heart rate and respiration. */
-function positive(value: Maybe): number | null {
+export function positive(value: Maybe): number | null {
   return typeof value === 'number' && value > 0 ? value : null;
 }
 
 /** Garmin reports "not enough data" as negative stress values. */
-function nonNegative(value: Maybe): number | null {
+export function nonNegative(value: Maybe): number | null {
   return typeof value === 'number' && value >= 0 ? value : null;
 }
 
-function minutes(seconds: Maybe): number | null {
+export function minutes(seconds: Maybe): number | null {
   return typeof seconds === 'number' ? round(seconds / 60) : null;
 }
 
@@ -53,6 +53,8 @@ export function dailyRow(summary: DailySummary) {
     intensity_min_total:
       typeof moderate === 'number' && typeof vigorous === 'number' ? moderate + 2 * vigorous : null,
     steps: summary.movement?.steps?.value ?? null,
+    calories_total_kcal: positive(summary.calories?.burnedTotal),
+    calories_active_kcal: summary.calories?.burnedActive ?? null,
     respiration_avg_brpm: round(positive(summary.respiration?.avgValue), 1),
   };
 }
@@ -72,12 +74,14 @@ export function sleepRow(sleep: DailySleep, timeZone: string) {
     rem_min: minutes(sleep.remSleepSeconds),
     awake_min: minutes(sleep.awakeSleepSeconds),
     awake_count: sleep.awakeCount ?? null,
+    nap_min: minutes(sleep.napTimeSeconds) || null,
     avg_hr_bpm: round(positive(sleep.avgHeartRate)),
     avg_respiration_brpm: round(positive(sleep.averageRespirationValue), 1),
     avg_spo2_pct: round(positive(sleep.averageSpO2Value)),
     avg_sleep_stress: round(nonNegative(sleep.avgSleepStress)),
     // sleepNeed is in minutes; `actual` includes Garmin's adjustments for training and sleep debt.
     sleep_need_min: sleep.sleepNeed?.actual ?? null,
+    breathing_disruptions: sleep.breathingDisruptionSeverity ?? null,
   };
 }
 
@@ -99,7 +103,8 @@ export const getDailySummariesTool = defineTool({
   description: [
     'All-day wellness per day over a date range, for trends: resting / min / max heart',
     'rate, Body Battery (max, min, charged, drained), average and max stress, intensity',
-    'minutes, steps and respiration, plus average / min / max of each field in `summary`.',
+    'minutes, steps, calories burned (total / active) and respiration, plus average / min /',
+    'max of each field in `summary`.',
     `Defaults to the last 7 days; at most ${MAX_DAYS.dailySummaries} days per call.`,
     "Today's row is partial. For sleep and HRV over a range use garmin_get_sleep_summaries",
     'and garmin_get_hrv_summaries, or garmin_get_days for everything per day.',
@@ -133,8 +138,9 @@ export const getSleepSummariesTool = defineTool({
   title: 'Get Garmin sleep summaries',
   description: [
     'Sleep per night over a date range, for trends: bedtime and wake time, duration,',
-    'sleep score, deep / light / REM / awake minutes, average heart rate, respiration,',
-    "SpO2, sleep stress and Garmin's sleep need, plus average / min / max in `summary`.",
+    'sleep score, deep / light / REM / awake minutes, nap minutes, average heart rate,',
+    "respiration, SpO2, sleep stress, breathing disruptions and Garmin's sleep need, plus",
+    'average / min / max in `summary`.',
     'Nights are keyed by the wake-up date.',
     `Defaults to the last 7 nights; at most ${MAX_DAYS.sleep} nights per call (Garmin's limit).`,
     'For one night in full detail use garmin_get_sleep.',

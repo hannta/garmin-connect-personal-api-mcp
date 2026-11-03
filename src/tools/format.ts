@@ -65,6 +65,8 @@ export function activityRow(activity: ActivitySummary) {
     },
     training_load: round(activity.activityTrainingLoad),
     fastest_splits: fastestSplits(activity),
+    personal_record: activity.isPR === true || null,
+    vo2max: round(activity.vO2MaxValue, 1),
   };
 }
 
@@ -136,7 +138,8 @@ export function splitTotals(
       avg_hr_bpm: round(split.averageHR),
       max_hr_bpm: round(split.maxHR),
       avg_power_w: round(split.averagePower),
-      avg_cadence_spm: round(split.averageRunCadence),
+      avg_cadence_spm: round(split.averageRunCadence ?? split.avgStepFrequency),
+      avg_step_length_m: round(split.avgStepLength, 2),
     }));
   return rows.length > 0 ? rows : null;
 }

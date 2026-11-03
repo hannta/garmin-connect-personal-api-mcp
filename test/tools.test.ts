@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { ActivitySummary } from '../src/garmin/types';
 import { MemoryStore } from '../src/garmin/store';
-import { getActivityTool } from '../src/tools/get-activity';
+import { getActivityTool, strengthSummary } from '../src/tools/get-activity';
 import { getDayTool } from '../src/tools/get-day';
 import { getHrvTool } from '../src/tools/get-hrv';
 import { getProfileTool } from '../src/tools/get-profile';
@@ -96,6 +96,7 @@ describe('garmin_get_activity', () => {
     activityId: 10000000003,
     powerTimeInZone_1: 600,
     powerTimeInZone_2: 600,
+    vO2MaxValue: 55.2,
   });
 
   it('combines activity details with zone times from search', async () => {
@@ -117,6 +118,24 @@ describe('garmin_get_activity', () => {
     expect(types.indexOf('active')).toBeLessThan(types.indexOf('recovery'));
     expect(result.perceived.rpe).toBeGreaterThanOrEqual(1);
     expect(result.perceived.rpe).toBeLessThanOrEqual(10);
+    expect(result).toMatchObject({
+      elevation: { min_m: 95, max_m: 132 },
+      running_dynamics: { max_cadence_spm: 196 },
+      training_effect: {
+        aerobic_message: 'IMPROVING_VO2_MAX_15',
+        anaerobic_message: 'MAINTAINING_ANAEROBIC_FITNESS_10',
+      },
+      sweat_loss_ml: 640,
+      temperature_c: { min: 4, max: 9 },
+      respiration_brpm: { min: 18, max: 43 },
+      vo2max: 55.2,
+      lactate_threshold_hr_bpm: null,
+      personal_record: true,
+      strength: null,
+    });
+    expect(result.intervals?.find((row) => row.type === 'active')).toMatchObject({
+      avg_step_length_m: 1.32,
+    });
     expect(result.warnings).toBeNull();
     expectNoPrivateFields(result);
   });
@@ -130,28 +149,86 @@ describe('garmin_get_activity', () => {
     expect(result.time_in_hr_zones).toBeNull();
     expect(result.warnings?.[0]).toMatch(/zones/);
   });
+
+  it('summarizes strength sets per exercise category in kg', () => {
+    const strength = (fixture('activities-search.json') as ActivitySummary[])[1];
+    expect(strength && strengthSummary(strength)).toEqual({
+      total_sets: 6,
+      active_sets: 6,
+      total_reps: 45,
+      exercises: [
+        {
+          category: 'SQUAT',
+          sub_category: 'GOBLET_SQUAT',
+          sets: 3,
+          reps: 30,
+          max_weight_kg: 16,
+          volume_kg: 480,
+          duration: '5:00',
+        },
+        {
+          category: 'PLANK',
+          sub_category: undefined,
+          sets: 3,
+          reps: 15,
+          max_weight_kg: null,
+          volume_kg: null,
+          duration: '3:00',
+        },
+      ],
+    });
+  });
 });
 
 describe('garmin_get_sleep', () => {
   it('formats the night ending on the requested date', async () => {
     const { context, query } = setup({
-      '/sleep-service/': () => json(fixture('sleep.json')),
+      '/sleep-service/': () => json([fixture('sleep.json')]),
     });
     const result = await getSleepTool.run({ date: '2026-03-02' }, context);
 
-    expect(query('/sleep-service/')).toEqual({ date: '2026-03-02' });
+    expect(query('/sleep-service/')).toEqual({ startDate: '2026-03-02', endDate: '2026-03-02' });
     expect(result).toMatchObject({
       date: '2026-03-02',
       duration: '7h 15m',
       score: { overall: 81 },
     });
     expect(result.sleep_start).toMatch(/\+02:00$/);
+    expect(result).toMatchObject({
+      score: { personalized_insight: 'POS_GOOD_SLEEP_AFTER_HARD_DAY' },
+      score_components: {
+        total_duration: { optimal_duration: '8h 0m' },
+        stress: { optimal: [0, 15] },
+        rem_percentage: { value: 24, optimal_pct: [21, 31] },
+      },
+      sleep_need: {
+        adjusted: '8h 20m',
+        adjusted_for: { training: 'CHRONIC', sleep_history: null, hrv: 'INCREASING', naps: null },
+      },
+      next_sleep_need: {
+        adjusted: '7h 50m',
+        adjusted_for: { sleep_history: 'DECREASING_HIGH_QUALITY' },
+        recommended_bedtime: ['22:30', '23:30'],
+      },
+      nap: '30m',
+      naps: [
+        {
+          start: '2026-03-02T14:00:00+02:00',
+          end: '2026-03-02T14:30:00+02:00',
+          duration: '30m',
+          feedback: 'IDEAL_TIMING_IDEAL_DURATION',
+        },
+      ],
+      breathing_disruptions: 'LOW',
+    });
+    expect(result.lowest_respiration_brpm).toEqual(expect.any(Number));
+    expect(JSON.stringify(result)).not.toContain('deviceId');
   });
 
   it('defaults to today and reports a night without data', async () => {
-    const { context, query } = setup({ '/sleep-service/': () => json({}, 404) });
+    const { context, query } = setup({ '/sleep-service/': () => json([]) });
     const result = await getSleepTool.run({}, context);
-    expect(query('/sleep-service/')).toEqual({ date: '2026-03-02' });
+    expect(query('/sleep-service/')).toEqual({ startDate: '2026-03-02', endDate: '2026-03-02' });
     expect(result).toMatchObject({ date: '2026-03-02', no_data: true });
   });
 });
@@ -180,7 +257,10 @@ describe('garmin_get_profile', () => {
       time_zone: 'Europe/Helsinki',
       time_zone_source: 'profile',
       first_day_of_week: 'monday',
+      training_days: ['monday', 'wednesday', 'saturday'],
+      long_training_days: ['saturday'],
     });
+    expect(result.heart_rate_zones[0]?.resting_hr_auto_update).toBe(false);
     const zones = result.heart_rate_zones[0]?.zones;
     expect(zones).toHaveLength(5);
     expect(zones?.[3]).toMatchObject({ zone: 4, from_bpm: 162 });
@@ -192,7 +272,7 @@ describe('garmin_get_profile', () => {
 describe('garmin_get_day', () => {
   const allRoutes: Routes = {
     '/usersummary-service/': () => json(fixture('daily-summaries.json')),
-    '/sleep-service/': () => json(fixture('sleep.json')),
+    '/sleep-service/': () => json([fixture('sleep.json')]),
     '/hrv-service/': () => json(fixture('hrv.json')),
     [SEARCH]: () => json(fixture('activities-search.json')),
   };
@@ -211,6 +291,25 @@ describe('garmin_get_day', () => {
       (result.intensity_minutes.moderate ?? 0) + 2 * (result.intensity_minutes.vigorous ?? 0),
     );
     expect(result.activities).toHaveLength(2);
+    expect(result.stress).toMatchObject({ rest_min: 720, low_min: 420, high_min: 10 });
+    expect(result).toMatchObject({
+      heart_rate: { alerts: 1 },
+      body_battery: { before_sleep: 31 },
+      calories_kcal: { total: 2500, active: 700, eaten: 2100, eaten_goal: 2400 },
+      hydration_ml: { intake: 1500, goal: 3000 },
+    });
+    expect(result.body_battery.events).toEqual([
+      expect.objectContaining({ type: 'sleep', start: '2026-02-28T23:00:00+02:00', impact: 50 }),
+      expect.objectContaining({
+        type: 'activity',
+        duration: '1h 0m',
+        feedback: 'IMPROVING_AEROBIC_BASE',
+      }),
+    ]);
+    expect(result.body_battery.feedback).toEqual({
+      level: 'MODERATE',
+      feedback: 'DAY_RECOVERING_AND_EXERCISE',
+    });
     expect(result.warnings).toBeNull();
     expectNoPrivateFields(result);
   });

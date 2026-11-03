@@ -35,6 +35,19 @@ export class GarminClient {
    * ("sleep for 2026-11-01"), never the URL, so messages stay readable.
    */
   async getJson<T>(path: string, query: Record<string, QueryValue> = {}, what = path): Promise<T> {
+    const value = await this.getOptionalJson<T>(path, query, what);
+    if (value === null) {
+      throw new GarminError('invalid_response', `Garmin returned no data for ${what}.`);
+    }
+    return value;
+  }
+
+  /** Like `getJson`, but an empty response (e.g. 204 No Content) is `null`. */
+  async getOptionalJson<T>(
+    path: string,
+    query: Record<string, QueryValue> = {},
+    what = path,
+  ): Promise<T | null> {
     const url = this.#url(path, query);
     let refreshedToken = false;
     let retriedUpstream = false;
@@ -68,8 +81,10 @@ export class GarminClient {
         throw errorFromStatus(response.status, what, response.headers.get('retry-after'));
       }
 
+      const text = await response.text();
+      if (text.trim() === '') return null;
       try {
-        return await response.json<T>();
+        return JSON.parse(text) as T;
       } catch {
         throw new GarminError('invalid_response', `Garmin returned invalid JSON for ${what}.`);
       }

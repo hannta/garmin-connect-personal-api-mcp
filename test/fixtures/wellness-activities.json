@@ -1,0 +1,33 @@
+[
+  {
+    "userProfilePk": 1,
+    "activityUuid": { "baseUUID": "00000000-0000-4000-8000-000000000002" },
+    "calendarDate": "2026-03-01",
+    "rulePK": 2,
+    "activityName": "Health Snapshot",
+    "notes": null,
+    "wellnessActivityType": "HEALTH_MONITORING",
+    "startTimestampGMT": "2026-03-01T19:00:00.0",
+    "endTimestampGMT": "2026-03-01T19:02:00.0",
+    "startTimestampLocal": "2026-03-01T21:00:00.0",
+    "endTimestampLocal": "2026-03-01T21:02:00.0",
+    "summaryTypeDataList": [
+      { "summaryType": "HEART_RATE", "minValue": 52, "maxValue": 61, "avgValue": 56.4 },
+      { "summaryType": "RMSSD_HRV", "minValue": 38, "maxValue": 55, "avgValue": 46.25 },
+      { "summaryType": "SPO2", "minValue": 95, "maxValue": 98, "avgValue": 96.7 }
+    ],
+    "timeInZoneList": [],
+    "deviceMetaData": { "deviceId": 1, "deviceName": "Watch" }
+  },
+  {
+    "activityName": "Breathwork",
+    "wellnessActivityType": "UNKNOWN",
+    "calendarDate": { "date": "2026-02-28T00:00:00.000Z", "localDate": "2026-02-28" },
+    "startTimestampGMT": { "date": "2026-02-28T06:30:00.000Z", "localDate": "2026-02-28" },
+    "endTimestampGMT": { "date": "2026-02-28T06:40:00.000Z", "localDate": "2026-02-28" },
+    "summaryTypeDataList": [
+      { "summaryType": "STRESS", "minValue": 5, "maxValue": 30, "avgValue": 12 }
+    ],
+    "timeInZoneList": [{ "zoneNumber": 1, "millisInZone": 480000, "zoneLowBoundary": 0 }]
+  }
+]

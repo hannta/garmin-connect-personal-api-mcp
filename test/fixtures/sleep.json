@@ -3,7 +3,7 @@
   "userProfilePK": 1,
   "calendarDate": "2026-03-02",
   "sleepTimeSeconds": 26100,
-  "napTimeSeconds": 0,
+  "napTimeSeconds": 1800,
   "sleepWindowConfirmed": true,
   "sleepStartTimestampGMT": 1772399400000,
   "sleepEndTimestampGMT": 1772427000000,
@@ -23,19 +23,79 @@
   "sleepScoreFeedback": "POSITIVE_DEEP",
   "sleepScoreInsight": "NONE",
   "sleepScores": {
-    "overall": { "value": 81, "qualifierKey": "GOOD" },
-    "totalDuration": { "qualifierKey": "GOOD" },
-    "stress": { "qualifierKey": "GOOD" },
-    "awakeCount": { "qualifierKey": "FAIR" },
-    "restlessness": { "qualifierKey": "GOOD" },
-    "remPercentage": { "value": 24, "qualifierKey": "EXCELLENT" },
-    "lightPercentage": { "value": 55, "qualifierKey": "EXCELLENT" },
-    "deepPercentage": { "value": 21, "qualifierKey": "EXCELLENT" }
+    "overall": {
+      "value": 81,
+      "qualifierKey": "GOOD"
+    },
+    "totalDuration": {
+      "qualifierKey": "GOOD",
+      "optimalStart": 28800.0,
+      "optimalEnd": 28800.0
+    },
+    "stress": {
+      "qualifierKey": "GOOD",
+      "optimalStart": 0.0,
+      "optimalEnd": 15.0
+    },
+    "awakeCount": {
+      "qualifierKey": "FAIR"
+    },
+    "restlessness": {
+      "qualifierKey": "GOOD"
+    },
+    "remPercentage": {
+      "value": 24,
+      "qualifierKey": "EXCELLENT",
+      "optimalStart": 21.0,
+      "optimalEnd": 31.0,
+      "idealStartInSeconds": 5500.0,
+      "idealEndInSeconds": 8100.0
+    },
+    "lightPercentage": {
+      "value": 55,
+      "qualifierKey": "EXCELLENT"
+    },
+    "deepPercentage": {
+      "value": 21,
+      "qualifierKey": "EXCELLENT"
+    }
   },
   "sleepNeed": {
     "calendarDate": "2026-03-02",
     "baseline": 480,
     "actual": 500,
-    "feedback": "INCREASED"
-  }
+    "feedback": "INCREASED",
+    "trainingFeedback": "CHRONIC",
+    "sleepHistoryAdjustment": "NO_CHANGE",
+    "hrvAdjustment": "INCREASING",
+    "napAdjustment": "NO_CHANGE"
+  },
+  "nextSleepNeed": {
+    "calendarDate": "2026-03-03",
+    "baseline": 480,
+    "actual": 470,
+    "feedback": "DECREASED",
+    "trainingFeedback": "NO_CHANGE",
+    "sleepHistoryAdjustment": "DECREASING_HIGH_QUALITY",
+    "hrvAdjustment": "NO_CHANGE",
+    "napAdjustment": "NO_CHANGE",
+    "recommendedBedtimeStartMins": 1350,
+    "recommendedBedtimeEndMins": 1410
+  },
+  "dailyNapDTOS": [
+    {
+      "userProfilePK": 1,
+      "deviceId": 1,
+      "calendarDate": "2026-03-02",
+      "napTimeSec": 1800,
+      "napStartTimestampGMT": "2026-03-02T12:00:00",
+      "napEndTimestampGMT": "2026-03-02T12:30:00",
+      "napStartTimeOffset": 120,
+      "napEndTimeOffset": 120,
+      "napFeedback": "IDEAL_TIMING_IDEAL_DURATION",
+      "napSource": 0
+    }
+  ],
+  "sleepScorePersonalizedInsight": "POS_GOOD_SLEEP_AFTER_HARD_DAY",
+  "breathingDisruptionSeverity": "LOW"
 }

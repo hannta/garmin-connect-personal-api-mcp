@@ -8,7 +8,7 @@
     "userProfilePK": 1,
     "calendarDate": "2026-03-01",
     "sleepTimeSeconds": 24000,
-    "napTimeSeconds": 0,
+    "napTimeSeconds": 1200,
     "sleepWindowConfirmed": true,
     "sleepStartTimestampGMT": 1772313000000,
     "sleepEndTimestampGMT": 1772340600000,

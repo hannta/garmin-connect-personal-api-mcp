@@ -1,0 +1,18 @@
+{
+  "userProfilePK": 1,
+  "calendarDate": "2026-03-02",
+  "averageSpO2": 95,
+  "lowestSpO2": 88,
+  "lastSevenDaysAvgSpO2": 95.4,
+  "latestSpO2": 96,
+  "avgSleepSpO2": 94,
+  "spO2HourlyAveragesDescriptorList": [
+    { "spo2ValueDescIndex": 0, "spo2ValueDescKey": "timestamp" },
+    { "spo2ValueDescIndex": 1, "spo2ValueDescKey": "spo2Level" },
+    { "spo2ValueDescIndex": 2, "spo2ValueDescKey": "monitoringEnvironmentLevel" }
+  ],
+  "spO2HourlyAverages": [
+    [1772402400000, 95, 120.4],
+    [1772406000000, null, 121.6]
+  ]
+}

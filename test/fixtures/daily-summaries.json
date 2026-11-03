@@ -15,31 +15,102 @@
         "totalDurationInMillis": 86400000
       },
       "movement": {
-        "steps": { "goal": 10000, "value": 12345, "distanceInMeters": 9876.0 },
-        "floorsAscended": { "goal": 10, "value": 7, "distanceInMeters": 21.3 },
-        "floorsDescended": { "value": 6, "distanceInMeters": 18.3 }
+        "steps": {
+          "goal": 10000,
+          "value": 12345,
+          "distanceInMeters": 9876.0
+        },
+        "floorsAscended": {
+          "goal": 10,
+          "value": 7,
+          "distanceInMeters": 21.3
+        },
+        "floorsDescended": {
+          "value": 6,
+          "distanceInMeters": 18.3
+        }
       },
-      "calories": { "burnedResting": 1800, "burnedActive": 700, "burnedTotal": 2500 },
-      "heartRate": { "minValue": 44, "maxValue": 168, "restingValue": 48 },
-      "intensityMinutes": { "goal": 150, "moderate": 12, "vigorous": 38 },
+      "calories": {
+        "burnedResting": 1800,
+        "burnedActive": 700,
+        "burnedTotal": 2500,
+        "consumedValue": 2100,
+        "consumedGoal": 2400
+      },
+      "heartRate": {
+        "minValue": 44,
+        "maxValue": 168,
+        "restingValue": 48,
+        "alertCount": 1
+      },
+      "intensityMinutes": {
+        "goal": 150,
+        "moderate": 12,
+        "vigorous": 38
+      },
       "stress": {
         "avgLevel": 24,
         "maxLevel": 88,
         "restProportion": 0.5,
         "lowStressProportion": 0.3,
         "mediumStressProportion": 0.05,
-        "highStressProportion": 0.01
+        "highStressProportion": 0.01,
+        "restDurationInMillis": 43200000,
+        "activityDurationInMillis": 3600000,
+        "lowStressDurationInMillis": 25200000,
+        "mediumStressDurationInMillis": 3000000,
+        "highStressDurationInMillis": 600000
       },
       "bodyBattery": {
         "minValue": 22,
         "maxValue": 81,
         "chargedValue": 55,
         "drainedValue": 52,
-        "latestValue": 29
+        "latestValue": 29,
+        "dynamicFeedbackEvent": {
+          "eventTimestampGmt": "2026-03-01T18:00:00.0",
+          "bodyBatteryLevel": "MODERATE",
+          "feedbackShortType": "DAY_RECOVERING_AND_EXERCISE"
+        },
+        "activityEvents": [
+          {
+            "eventType": "SLEEP",
+            "eventStartTimeGmt": "2026-02-28T21:00:00.0",
+            "eventStartTimeLocal": "2026-02-28T23:00:00.0",
+            "bodyBatteryImpact": 50,
+            "feedbackType": "NONE",
+            "shortFeedback": "NONE",
+            "deviceId": 1,
+            "durationInMillis": 27000000
+          },
+          {
+            "eventType": "ACTIVITY",
+            "eventStartTimeGmt": "2026-03-01T07:00:00.0",
+            "eventStartTimeLocal": "2026-03-01T09:00:00.0",
+            "bodyBatteryImpact": -12,
+            "feedbackType": "EXERCISE_TRAINING_EFFECT_3",
+            "shortFeedback": "IMPROVING_AEROBIC_BASE",
+            "deviceId": 1,
+            "durationInMillis": 3600000
+          }
+        ],
+        "endOfDayValue": 31
       },
-      "hydration": { "goalInMl": 3000, "consumedInMl": 0 },
-      "respiration": { "avgValue": 14, "maxValue": 30, "minValue": 8, "latestValue": 15 },
-      "pulseOx": { "avgAltitudeInMeters": 50.0 }
+      "hydration": {
+        "goalInMl": 3000,
+        "consumedInMl": 1500,
+        "goalInFractionalMl": 3000.0,
+        "consumedInFractionalMl": 1500.0
+      },
+      "respiration": {
+        "avgValue": 14,
+        "maxValue": 30,
+        "minValue": 8,
+        "latestValue": 15
+      },
+      "pulseOx": {
+        "avgAltitudeInMeters": 50.0
+      }
     },
     {
       "uuid": "00000000-0000-4000-8000-000000000011",
@@ -48,10 +119,28 @@
       "source": "garmin",
       "includesWellnessData": true,
       "includesActivityData": false,
-      "movement": { "steps": { "goal": 10000, "value": 4321, "distanceInMeters": 3500.0 } },
-      "heartRate": { "minValue": 46, "maxValue": 120, "restingValue": 50 },
-      "intensityMinutes": { "goal": 150, "moderate": 0, "vigorous": 0 },
-      "bodyBattery": { "minValue": 29, "maxValue": 74, "latestValue": 61 }
+      "movement": {
+        "steps": {
+          "goal": 10000,
+          "value": 4321,
+          "distanceInMeters": 3500.0
+        }
+      },
+      "heartRate": {
+        "minValue": 46,
+        "maxValue": 120,
+        "restingValue": 50
+      },
+      "intensityMinutes": {
+        "goal": 150,
+        "moderate": 0,
+        "vigorous": 0
+      },
+      "bodyBattery": {
+        "minValue": 29,
+        "maxValue": 74,
+        "latestValue": 61
+      }
     }
   ]
 }

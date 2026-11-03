@@ -1,0 +1,66 @@
+[
+  {
+    "index": 0,
+    "workoutName": "6 x 800 m",
+    "timeCreated": "2026-02-20T18:00:00",
+    "sport": "RUNNING",
+    "manufacturer": "GARMIN",
+    "workoutPhrase": "VO2MAX_INTERVALS",
+    "steps": [
+      {
+        "stepIndex": 0,
+        "name": "Warm up",
+        "intensity": "WARMUP",
+        "durationType": "TIME",
+        "durationValue": 900,
+        "targetType": "HEART_RATE",
+        "targetValue": 0,
+        "targetValueLow": 230,
+        "targetValueHigh": 250
+      },
+      {
+        "stepIndex": 1,
+        "intensity": "ACTIVE",
+        "durationType": "DISTANCE",
+        "durationValue": 800,
+        "targetType": "SPEED",
+        "targetValue": 0,
+        "targetValueLow": 4.1667,
+        "targetValueHigh": 4.3478
+      },
+      {
+        "stepIndex": 2,
+        "intensity": "RECOVERY",
+        "durationType": "TIME",
+        "durationValue": 120,
+        "targetType": "OPEN"
+      },
+      {
+        "stepIndex": 3,
+        "durationType": "REPEAT_UNTIL_STEPS_CMPLT",
+        "durationValue": 1,
+        "targetValue": 6
+      },
+      {
+        "stepIndex": 4,
+        "intensity": "COOLDOWN",
+        "durationType": "HR_LESS_THAN",
+        "durationValue": 230,
+        "targetType": "HEART_RATE",
+        "targetValue": 2
+      },
+      {
+        "stepIndex": 5,
+        "intensity": "ACTIVE",
+        "durationType": "REPS",
+        "durationValue": 10,
+        "targetType": "OPEN",
+        "exerciseCategory": "SQUAT",
+        "exerciseName": "GOBLET_SQUAT",
+        "exerciseWeightValue": 16,
+        "weightDisplayUnit": "KILOGRAM",
+        "equipmentType": "NONE"
+      }
+    ]
+  }
+]

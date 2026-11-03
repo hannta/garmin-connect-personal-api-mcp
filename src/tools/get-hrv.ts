@@ -2,9 +2,8 @@ import { z } from 'zod';
 import { getHrv } from '../garmin/endpoints';
 import { GarminError } from '../garmin/errors';
 import type { HrvDay, HrvReading, HrvSummary } from '../garmin/types';
-import { parseGarminGmt, toLocalIso } from '../lib/dates';
-import { round } from '../lib/units';
 import { dateInput, defineTool } from './define';
+import { averagePerInterval } from './samples';
 
 const BUCKET_MINUTES = 30;
 
@@ -50,21 +49,13 @@ export function hrvSummaryFields(summary: HrvSummary) {
 
 /** Average readings per local half hour, e.g. { time: "02:30", hrv_ms: 51 }. */
 export function bucketReadings(readings: HrvReading[] | null | undefined, timeZone: string) {
-  const buckets = new Map<string, number[]>();
-  for (const reading of readings ?? []) {
-    const at = parseGarminGmt(reading.readingTimeGMT);
-    if (!at || typeof reading.hrvValue !== 'number') continue;
-    const local = toLocalIso(at, timeZone);
-    const minute = Number(local.slice(14, 16));
-    const key = `${local.slice(11, 13)}:${String(minute - (minute % BUCKET_MINUTES)).padStart(2, '0')}`;
-    const values = buckets.get(key) ?? [];
-    values.push(reading.hrvValue);
-    buckets.set(key, values);
-  }
-  // Map keeps insertion order, and Garmin returns readings in time order.
-  return [...buckets].map(([time, values]) => ({
+  const samples = (readings ?? []).map((reading) => ({
+    at: reading.readingTimeGMT,
+    value: reading.hrvValue,
+  }));
+  return averagePerInterval(samples, timeZone, BUCKET_MINUTES).map(({ time, value }) => ({
     time,
-    hrv_ms: round(values.reduce((sum, value) => sum + value, 0) / values.length),
+    hrv_ms: value,
   }));
 }
 

@@ -1,9 +1,9 @@
 import { z } from 'zod';
 import type { GarminClient } from '../garmin/client';
 import { getActivity, searchActivities } from '../garmin/endpoints';
-import type { ActivityDetail, ActivitySummary } from '../garmin/types';
+import type { ActivityDetail, ActivitySummary, SummarizedExerciseSet } from '../garmin/types';
 import { localIsoFromPair } from '../lib/dates';
-import { metersToKm, round } from '../lib/units';
+import { formatDuration, gramsToKg, metersToKm, round } from '../lib/units';
 import { defineTool } from './define';
 import {
   durationFields,
@@ -28,8 +28,9 @@ export const getActivityTool = defineTool({
     'Full summary of one Garmin activity: pace and grade-adjusted pace, heart rate and',
     'time in HR zones, running dynamics (cadence, ground contact time, vertical',
     'oscillation, stride), power, training effect and load, RPE and feel, Body Battery',
-    'change, stamina, and interval totals by type (warm-up / active / recovery / cool-down)',
-    'plus run / walk totals. Per-lap rows are not available.',
+    'change, stamina, temperature, estimated sweat loss, and interval totals by type',
+    '(warm-up / active / recovery / cool-down) plus run / walk totals. Strength activities',
+    'add sets, reps and weight per exercise category. Per-lap rows are not available.',
     'Find the id with garmin_search_activities or garmin_get_day.',
   ].join(' '),
   inputSchema: z.object({
@@ -83,7 +84,12 @@ export function formatActivity(
     ...paceOrSpeed(type, s.avgGradeAdjustedSpeed, 'avg_grade_adjusted_'),
     ...paceOrSpeed(type, s.averageMovingSpeed, 'avg_moving_'),
     ...paceOrSpeed(type, s.maxSpeed, 'max_'),
-    elevation: { gain_m: round(s.elevationGain), loss_m: round(s.elevationLoss) },
+    elevation: {
+      gain_m: round(s.elevationGain),
+      loss_m: round(s.elevationLoss),
+      min_m: round(s.minElevation),
+      max_m: round(s.maxElevation),
+    },
     heart_rate: {
       avg_bpm: round(s.averageHR),
       max_bpm: round(s.maxHR),
@@ -92,6 +98,7 @@ export function formatActivity(
     time_in_hr_zones: summary ? hrTimeInZones(summary) : null,
     running_dynamics: {
       cadence_spm: round(s.averageRunCadence),
+      max_cadence_spm: round(s.maxRunCadence),
       ground_contact_time_ms: round(s.groundContactTime),
       stride_length_cm: round(s.strideLength),
       vertical_oscillation_cm: round(s.verticalOscillation, 1),
@@ -107,6 +114,8 @@ export function formatActivity(
       aerobic: round(s.trainingEffect, 1),
       anaerobic: round(s.anaerobicTrainingEffect, 1),
       label: s.trainingEffectLabel,
+      aerobic_message: s.aerobicTrainingEffectMessage,
+      anaerobic_message: s.anaerobicTrainingEffectMessage,
     },
     training_load: round(s.activityTrainingLoad),
     perceived: {
@@ -124,8 +133,22 @@ export function formatActivity(
       min_available: round(s.minAvailableStamina),
     },
     calories_kcal: round(s.calories),
-    avg_temperature_c: round(s.averageTemperature),
-    avg_respiration_brpm: round(s.avgRespirationRate),
+    sweat_loss_ml: round(s.waterEstimated),
+    temperature_c: {
+      avg: round(s.averageTemperature),
+      min: round(s.minTemperature),
+      max: round(s.maxTemperature),
+    },
+    respiration_brpm: {
+      avg: round(s.avgRespirationRate),
+      min: round(s.minRespirationRate),
+      max: round(s.maxRespirationRate),
+    },
+    // In Garmin's spec but not seen in real data so far; returned when present.
+    vo2max: round(summary?.vO2MaxValue, 1),
+    lactate_threshold_hr_bpm: round(summary?.lactateThresholdBpm),
+    personal_record: detail.metadataDTO?.personalRecord === true || summary?.isPR === true || null,
+    strength: summary ? strengthSummary(summary) : null,
     lap_count: lapCount,
     intervals,
     run_walk: splitTotals(detail.splitSummaries, 'RWD_', type),
@@ -134,5 +157,25 @@ export function formatActivity(
         ? 'Interval data is totals per type; per-lap rows are not available.'
         : null,
     warnings: warnings.length > 0 ? warnings : null,
+  };
+}
+
+/** Strength totals per exercise category, from activity search. */
+export function strengthSummary(summary: ActivitySummary) {
+  const exercises = (summary.summarizedExerciseSets ?? []).map((set: SummarizedExerciseSet) => ({
+    category: set.category,
+    sub_category: set.subCategory,
+    sets: set.sets,
+    reps: set.reps,
+    max_weight_kg: set.maxWeight ? gramsToKg(set.maxWeight) : null,
+    volume_kg: set.volume ? gramsToKg(set.volume, 0) : null,
+    duration: formatDuration(typeof set.duration === 'number' ? set.duration / 1000 : null),
+  }));
+  if (exercises.length === 0 && typeof summary.totalSets !== 'number') return null;
+  return {
+    total_sets: summary.totalSets,
+    active_sets: summary.activeSets,
+    total_reps: summary.totalReps,
+    exercises: exercises.length > 0 ? exercises : null,
   };
 }

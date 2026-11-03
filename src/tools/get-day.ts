@@ -1,18 +1,23 @@
 import { z } from 'zod';
 import { getDailySummaries, getHrv, getSleep, searchActivities } from '../garmin/endpoints';
 import type { ActivitySummary, DailySleep, DailySummary, HrvDay } from '../garmin/types';
+import { localIsoFromPair } from '../lib/dates';
 import { formatHoursMinutes, round } from '../lib/units';
 import { dateInput, defineTool } from './define';
 import { activityRow } from './format';
 import { hasSleepData } from './get-sleep';
 import { settledValue, settledWarning } from './result';
+import { minutes } from './summaries';
+import { bodyBatteryEvent, bodyBatteryFeedback } from './wellness';
 
 export const getDayTool = defineTool({
   name: 'garmin_get_day',
   title: 'Get a Garmin day',
   description: [
     'One day at a glance, for readiness and recovery questions: resting heart rate, Body',
-    "Battery, stress, intensity minutes, steps, the previous night's sleep (keyed by this",
+    'Battery (with the sleep and activity events behind it), stress and minutes per stress',
+    'level, intensity minutes, steps, calories (burned, and eaten if food is logged),',
+    "logged hydration, heart-rate alerts, the previous night's sleep (keyed by this",
     "wake-up date) and HRV summary, and a compact list of that day's activities.",
     'For "should I train hard today?", call it for today and yesterday.',
     'For detail, use garmin_get_sleep, garmin_get_hrv and garmin_get_activity.',
@@ -50,7 +55,7 @@ export const getDayTool = defineTool({
       zone.timeZone,
       {
         summary: settledValue(summaries)?.[0],
-        sleep: settledValue(sleep),
+        sleep: settledValue(sleep) ?? undefined,
         hrv: settledValue(hrv),
         activities: settledValue(activities),
       },
@@ -71,19 +76,43 @@ export function formatDay(date: string, timeZone: string, data: DayData, warning
   const moderate = summary?.intensityMinutes?.moderate;
   const vigorous = summary?.intensityMinutes?.vigorous;
   const hrvSummary = hrv?.hrvSummary;
+  const stress = summary?.stress;
   return {
     date,
     time_zone: timeZone,
     resting_hr_bpm: summary?.heartRate?.restingValue,
-    heart_rate: { min_bpm: summary?.heartRate?.minValue, max_bpm: summary?.heartRate?.maxValue },
+    heart_rate: {
+      min_bpm: summary?.heartRate?.minValue,
+      max_bpm: summary?.heartRate?.maxValue,
+      alerts: summary?.heartRate?.alertCount || null,
+    },
     body_battery: {
       latest: summary?.bodyBattery?.latestValue,
+      before_sleep: summary?.bodyBattery?.endOfDayValue,
       max: summary?.bodyBattery?.maxValue,
       min: summary?.bodyBattery?.minValue,
       charged: summary?.bodyBattery?.chargedValue,
       drained: summary?.bodyBattery?.drainedValue,
+      events: summary?.bodyBattery?.activityEvents?.map((event) =>
+        bodyBatteryEvent({
+          type: event.eventType,
+          start: localIsoFromPair(event.eventStartTimeLocal, event.eventStartTimeGmt),
+          durationMs: event.durationInMillis,
+          impact: event.bodyBatteryImpact,
+          shortFeedback: event.shortFeedback,
+        }),
+      ),
+      feedback: bodyBatteryFeedback(summary?.bodyBattery?.dynamicFeedbackEvent),
     },
-    stress: { avg: summary?.stress?.avgLevel, max: summary?.stress?.maxLevel },
+    stress: {
+      avg: stress?.avgLevel,
+      max: stress?.maxLevel,
+      rest_min: minutes(msToSeconds(stress?.restDurationInMillis)),
+      low_min: minutes(msToSeconds(stress?.lowStressDurationInMillis)),
+      medium_min: minutes(msToSeconds(stress?.mediumStressDurationInMillis)),
+      high_min: minutes(msToSeconds(stress?.highStressDurationInMillis)),
+      activity_min: minutes(msToSeconds(stress?.activityDurationInMillis)),
+    },
     intensity_minutes: {
       moderate,
       vigorous,
@@ -95,6 +124,13 @@ export function formatDay(date: string, timeZone: string, data: DayData, warning
       weekly_goal: summary?.intensityMinutes?.goal,
     },
     steps: summary?.movement?.steps?.value,
+    calories_kcal: {
+      total: summary?.calories?.burnedTotal,
+      active: summary?.calories?.burnedActive,
+      eaten: summary?.calories?.consumedValue,
+      eaten_goal: summary?.calories?.consumedValue != null ? summary.calories.consumedGoal : null,
+    },
+    hydration_ml: hydration(summary),
     avg_respiration_brpm: round(summary?.respiration?.avgValue, 1),
     sleep: hasSleepData(sleep ?? null)
       ? {
@@ -120,4 +156,16 @@ export function formatDay(date: string, timeZone: string, data: DayData, warning
     activities: activities?.map(activityRow) ?? null,
     warnings: warnings.length > 0 ? warnings : null,
   };
+}
+
+function msToSeconds(ms: number | null | undefined): number | null {
+  return typeof ms === 'number' ? ms / 1000 : null;
+}
+
+/** Logged water intake; null when nothing was logged. */
+function hydration(summary: DailySummary | undefined) {
+  const intake = round(
+    summary?.hydration?.consumedInMl ?? summary?.hydration?.consumedInFractionalMl,
+  );
+  return intake ? { intake, goal: summary?.hydration?.goalInMl } : null;
 }

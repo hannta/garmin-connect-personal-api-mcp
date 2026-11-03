@@ -2,12 +2,23 @@
   "displayName": "00000000-0000-4000-8000-000000000001",
   "preferredLocale": "en",
   "measurementSystem": "metric",
-  "firstDayOfWeek": { "dayId": 3, "dayName": "monday", "sortOrder": 3, "isPossibleFirstDay": true },
+  "firstDayOfWeek": {
+    "dayId": 3,
+    "dayName": "monday",
+    "sortOrder": 3,
+    "isPossibleFirstDay": true
+  },
   "numberFormat": "decimal_period",
-  "timeFormat": { "formatKey": "time_twenty_four_hr", "displayFormat": "H:mm" },
-  "dateFormat": { "formatKey": "yyyymmdd", "displayFormat": "yyyy-MM-dd" },
+  "timeFormat": {
+    "formatKey": "time_twenty_four_hr",
+    "displayFormat": "H:mm"
+  },
+  "dateFormat": {
+    "formatKey": "yyyymmdd",
+    "displayFormat": "yyyy-MM-dd"
+  },
   "timeZone": "Europe/Helsinki",
   "hydrationMeasurementUnit": "milliliter",
-  "availableTrainingDays": null,
-  "preferredLongTrainingDays": null
+  "availableTrainingDays": ["MONDAY", "WEDNESDAY", "SATURDAY"],
+  "preferredLongTrainingDays": ["SATURDAY"]
 }
