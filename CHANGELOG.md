@@ -3,50 +3,36 @@
 All notable changes are documented here. The project follows
 [Semantic Versioning](https://semver.org/).
 
-## [Unreleased]
+## [1.0.0] - 2026-11-04
+
+First public release.
 
 ### Added
 
-- Project scaffold: TypeScript, Wrangler, ESLint + Prettier, Vitest, GitHub Actions CI
-- Garmin Personal API client: token exchange with KV caching, typed endpoints, error mapping
-- Metric unit and time-zone-aware date helpers
+- Read-only MCP server at `/mcp` (stateless Streamable HTTP) on Cloudflare Workers, with
+  27 tools for the Garmin Connect Personal API:
+  - Daily overview: `garmin_get_day`, `garmin_get_days`
+  - Activities: `garmin_search_activities`, `garmin_get_activity`,
+    `garmin_get_activity_streams`, `garmin_get_activity_laps`,
+    `garmin_get_activity_workouts`
+  - Sleep and HRV: `garmin_get_sleep`, `garmin_get_sleep_summaries`, `garmin_get_hrv`,
+    `garmin_get_hrv_summaries`
+  - Daily metrics: `garmin_get_daily_summaries`, `garmin_get_body_battery`,
+    `garmin_get_stress`, `garmin_get_steps`, `garmin_get_heart_rate`, `garmin_get_spo2`
+  - Body and profile: `garmin_get_weight`, `garmin_get_weight_goals`,
+    `garmin_get_fitness_age`, `garmin_get_heart_rate_zones`, `garmin_get_profile`
+  - Nutrition and wellness: `garmin_get_hydration`, `garmin_get_food_log`,
+    `garmin_get_wellness_activities`
+  - Menstrual tracking: `garmin_get_menstrual_cycle`, `garmin_get_menstrual_day`
+- Metric output with the unit in every field name, and dates in the user's time zone
+- Built-in FIT reader for per-lap and per-rep data, which never reads position fields
 - OAuth 2.1 sign-in with `OWNER_PASSPHRASE`: dynamic client registration and Client ID
   Metadata Documents, 1-hour access tokens, 30-day sliding refresh, failed-sign-in
   lockout, and sign-out of all apps by changing the passphrase
-- MCP server at `/mcp` (stateless Streamable HTTP) with six
-  read-only tools: `garmin_get_day`, `garmin_search_activities`, `garmin_get_activity`,
-  `garmin_get_sleep`, `garmin_get_hrv`, `garmin_get_profile`
-- Deployment guide: [docs/DEPLOY.md](docs/DEPLOY.md)
-- Range tools: `garmin_get_days`, `garmin_get_daily_summaries`,
-  `garmin_get_sleep_summaries`, `garmin_get_hrv_summaries`, `garmin_get_weight`, with a
-  7-day default, one Garmin request per source and `summary` statistics
-- `garmin_get_activity_streams`: Garmin-downsampled time series for one activity
-- `garmin_search_activities`: weekly totals (`group_by: "week"`) and fastest splits
-- Full endpoint coverage (26 tools): `garmin_get_body_battery`, `garmin_get_stress`,
-  `garmin_get_steps`, `garmin_get_heart_rate`, `garmin_get_spo2`,
-  `garmin_get_fitness_age`, `garmin_get_heart_rate_zones`, `garmin_get_weight_goals`,
-  `garmin_get_activity_workouts` (decoded workout steps and targets), and, built from
-  Garmin's OpenAPI spec: `garmin_get_hydration`, `garmin_get_wellness_activities`,
-  `garmin_get_food_log`, `garmin_get_menstrual_cycle`, `garmin_get_menstrual_day`
-- `garmin_get_activity_laps`: one row per lap and interval rep from the activity's FIT
-  file, with a small built-in FIT reader. Long activities can exceed the free plan's CPU
-  limit
-- [SECURITY.md](SECURITY.md): security model, limits and vulnerability reporting
-- `garmin_get_day`: Body Battery events (sleep, activities) and minutes per stress level
-- `garmin_get_heart_rate`: high / low heart-rate alerts; `garmin_get_fitness_age`:
-  achievable fitness age and why it is missing
-- `garmin_get_sleep`: optimal range per score component, sleep-need reasons, next
-  night's sleep need, naps with times, respiration range, breathing disruptions,
-  personalized insight; sleep range rows add nap minutes and breathing disruptions
-- `garmin_get_activity`: min / max elevation, temperature and respiration, max cadence,
-  estimated sweat loss, training-effect messages, personal-record flag, strength sets
-  per exercise category, step length per interval type, VO2max and lactate threshold
-  when Garmin provides them; activity rows add the personal-record flag
-- `garmin_get_day`: calories burned and eaten, logged hydration, heart-rate alerts,
-  Body Battery before sleep; daily summary rows add calories burned
-- `garmin_get_profile`: training and long-run days; zones say whether resting HR
-  auto-updates
+- [Deployment guide](docs/DEPLOY.md), including a Deploy to Cloudflare button
+- [Security policy](SECURITY.md)
 
-### Changed
+### Known limitations
 
-- Activity rows leave out distance and pace for activities without distance
+- `garmin_get_activity_laps` can exceed the Cloudflare free plan's CPU limit on long
+  activities. See [Known limitations](docs/DEPLOY.md#known-limitations).
