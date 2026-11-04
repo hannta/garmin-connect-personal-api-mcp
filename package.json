@@ -1,7 +1,8 @@
 {
   "name": "garmin-connect-personal-api-mcp",
   "version": "0.1.0",
-  "description": "Unofficial, self-hosted MCP server for the Garmin Connect Personal API, running on Cloudflare Workers.",
+  "description": "Self-hosted MCP server for the Garmin Connect Personal API on Cloudflare Workers.",
+  "author": "Hannu Tapanila",
   "license": "MIT",
   "private": true,
   "type": "module",
