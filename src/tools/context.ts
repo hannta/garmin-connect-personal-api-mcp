@@ -29,6 +29,7 @@ interface ProfileBasics {
 
 export interface ToolContext {
   readonly client: GarminClient;
+  readonly store: KeyValueStore;
   now(): Date;
   timeZone(): Promise<ResolvedTimeZone>;
   /** Today's date (YYYY-MM-DD) in the user's time zone. */
@@ -57,6 +58,7 @@ export function createToolContext(options: ToolContextOptions): ToolContext {
       client ??= options.client();
       return client;
     },
+    store: options.store,
     now,
     timeZone() {
       zone ??= resolveUserTimeZone(options, readProfile);

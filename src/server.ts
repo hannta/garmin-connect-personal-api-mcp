@@ -9,6 +9,7 @@ import { TokenProvider } from './garmin/token';
 import { createToolContext, type ToolContext } from './tools/context';
 import type { ToolDefinition } from './tools/define';
 import { getActivityTool } from './tools/get-activity';
+import { getActivityLapsTool } from './tools/get-activity-laps';
 import { getActivityStreamsTool } from './tools/get-activity-streams';
 import { getFitnessAgeTool, getHeartRateZonesTool, getWeightGoalsTool } from './tools/fitness';
 import { getDayTool } from './tools/get-day';
@@ -44,11 +45,11 @@ const INSTRUCTIONS = [
   'find activities. Range tools default to the last 7 days and make one Garmin request',
   'per source; if a range is too long, the error says the maximum: split it into several',
   'calls. Range results include plain average / min / max statistics in `summary`; any',
-  'further analysis is yours.',
+  'further analysis is yours. Use garmin_get_activity_laps for one row per lap or',
+  'interval rep.',
   'Not available from the Garmin Personal API: Training Readiness, Training Status,',
-  'VO2max history, a personal-records list, gear and per-lap data. Say so instead of',
-  'guessing, and label any readiness estimate you make from HRV, sleep and load as your',
-  'own estimate.',
+  'VO2max history, a personal-records list and gear. Say so instead of guessing, and',
+  'label any readiness estimate you make from HRV, sleep and load as your own estimate.',
 ].join(' ');
 
 export interface ServerOptions {
@@ -103,6 +104,7 @@ export function createServer(env: Env, options: ServerOptions = {}): McpServer {
   register(server, context, getMenstrualDayTool);
   register(server, context, getActivityWorkoutsTool);
   register(server, context, getActivityStreamsTool);
+  register(server, context, getActivityLapsTool);
   return server;
 }
 

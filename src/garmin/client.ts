@@ -1,4 +1,4 @@
-// Authenticated JSON requests to the Garmin Personal API.
+// Authenticated requests to the Garmin Personal API.
 // Retries: once with a fresh token on 401/403, once after a short pause on 502/503/504 or
 // a network error. 404 and 429 are returned as typed errors without retrying.
 
@@ -48,6 +48,28 @@ export class GarminClient {
     query: Record<string, QueryValue> = {},
     what = path,
   ): Promise<T | null> {
+    const response = await this.#request(path, query, 'application/json', what);
+    const text = await response.text();
+    if (text.trim() === '') return null;
+    try {
+      return JSON.parse(text) as T;
+    } catch {
+      throw new GarminError('invalid_response', `Garmin returned invalid JSON for ${what}.`);
+    }
+  }
+
+  /** GET a file. Garmin answers 406 to `Accept: application/json` on downloads. */
+  async getBytes(path: string, what = path): Promise<Uint8Array> {
+    const response = await this.#request(path, {}, '*/*', what);
+    return new Uint8Array(await response.arrayBuffer());
+  }
+
+  async #request(
+    path: string,
+    query: Record<string, QueryValue>,
+    accept: string,
+    what: string,
+  ): Promise<Response> {
     const url = this.#url(path, query);
     let refreshedToken = false;
     let retriedUpstream = false;
@@ -57,7 +79,7 @@ export class GarminClient {
       let response: Response;
       try {
         response = await this.#fetch(url, {
-          headers: { Accept: 'application/json', Authorization: `Bearer ${token}` },
+          headers: { Accept: accept, Authorization: `Bearer ${token}` },
         });
       } catch {
         if (!retriedUpstream) {
@@ -80,14 +102,7 @@ export class GarminClient {
       if (!response.ok) {
         throw errorFromStatus(response.status, what, response.headers.get('retry-after'));
       }
-
-      const text = await response.text();
-      if (text.trim() === '') return null;
-      try {
-        return JSON.parse(text) as T;
-      } catch {
-        throw new GarminError('invalid_response', `Garmin returned invalid JSON for ${what}.`);
-      }
+      return response;
     }
   }
 

@@ -1,7 +1,8 @@
 # Deploying
 
 This guide puts the server on your own Cloudflare account and connects it to an MCP
-client. It takes about ten minutes and fits in the Workers **free plan**.
+client. It takes about ten minutes and fits in the Workers **free plan**, apart from one
+[known limitation](#known-limitations).
 
 You need:
 
@@ -83,6 +84,17 @@ tools menu and ask, for example, "How did I sleep last night, and how was my run
 Add a remote MCP server with the URL `https://<your-worker>/mcp` (Streamable HTTP). The
 client needs OAuth support: it registers itself, opens the server's sign-in page, and
 you enter your passphrase.
+
+## Known limitations
+
+**Laps on the free plan.** `garmin_get_activity_laps` reads the activity's FIT file, which
+uses more CPU than the other tools. On the free plan a long activity can go over the
+10 ms CPU limit, and that call then fails with a connector error (Cloudflare error 1102).
+A marathon's file took 3–7 ms on a laptop, but this hasn't been measured on Cloudflare.
+Every other tool is unaffected. If you hit this, switch the account to Workers Paid
+($5/month); no code changes are needed.
+
+Each file is read once, and the laps (never the file) are cached in KV for 30 days.
 
 ## Updating
 

@@ -88,3 +88,22 @@ describe('GarminClient', () => {
     await expect(required.getJson('/x')).rejects.toMatchObject({ code: 'invalid_response' });
   });
 });
+
+describe('GarminClient.getBytes', () => {
+  it('downloads with Accept: */*, which Garmin requires for files', async () => {
+    const mock = mockFetch([() => new Response(Uint8Array.of(1, 2, 3))]);
+    const { client } = makeClient(mock.fetch);
+    expect(await client.getBytes('/files/1', 'file 1')).toEqual(Uint8Array.of(1, 2, 3));
+    expect(mock.dataCalls()[0]?.accept).toBe('*/*');
+  });
+
+  it('retries and maps errors like JSON requests', async () => {
+    const mock = mockFetch([
+      () => new Response('busy', { status: 503 }),
+      () => new Response('gone', { status: 404 }),
+    ]);
+    const { client } = makeClient(mock.fetch);
+    await expect(client.getBytes('/files/1', 'file 1')).rejects.toThrow(/no data for file 1/);
+    expect(mock.dataCalls()).toHaveLength(2);
+  });
+});

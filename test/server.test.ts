@@ -10,6 +10,7 @@ import { NOW_MS, TEST_KEY, fixture, json, routedFetch } from './helpers';
 
 const TOOL_NAMES = [
   'garmin_get_activity',
+  'garmin_get_activity_laps',
   'garmin_get_activity_streams',
   'garmin_get_activity_workouts',
   'garmin_get_body_battery',

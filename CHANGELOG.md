@@ -28,6 +28,9 @@ All notable changes are documented here. The project follows
   `garmin_get_activity_workouts` (decoded workout steps and targets), and, built from
   Garmin's OpenAPI spec: `garmin_get_hydration`, `garmin_get_wellness_activities`,
   `garmin_get_food_log`, `garmin_get_menstrual_cycle`, `garmin_get_menstrual_day`
+- `garmin_get_activity_laps`: one row per lap and interval rep from the activity's FIT
+  file, with a small built-in FIT reader. Long activities can exceed the free plan's CPU
+  limit
 - [SECURITY.md](SECURITY.md): security model, limits and vulnerability reporting
 - `garmin_get_day`: Body Battery events (sleep, activities) and minutes per stress level
 - `garmin_get_heart_rate`: high / low heart-rate alerts; `garmin_get_fitness_age`:

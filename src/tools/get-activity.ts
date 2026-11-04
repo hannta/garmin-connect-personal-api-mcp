@@ -30,7 +30,8 @@ export const getActivityTool = defineTool({
     'oscillation, stride), power, training effect and load, RPE and feel, Body Battery',
     'change, stamina, temperature, estimated sweat loss, and interval totals by type',
     '(warm-up / active / recovery / cool-down) plus run / walk totals. Strength activities',
-    'add sets, reps and weight per exercise category. Per-lap rows are not available.',
+    'add sets, reps and weight per exercise category. For per-lap rows, use',
+    'garmin_get_activity_laps.',
     'Find the id with garmin_search_activities or garmin_get_day.',
   ].join(' '),
   inputSchema: z.object({
@@ -154,7 +155,7 @@ export function formatActivity(
     run_walk: splitTotals(detail.splitSummaries, 'RWD_', type),
     note:
       intervals || (lapCount ?? 0) > 1
-        ? 'Interval data is totals per type; per-lap rows are not available.'
+        ? 'Interval data is totals per type; garmin_get_activity_laps has one row per lap and rep.'
         : null,
     warnings: warnings.length > 0 ? warnings : null,
   };

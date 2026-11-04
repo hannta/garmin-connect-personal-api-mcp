@@ -72,10 +72,13 @@ Garmin Connect Personal API
 
 ## Decisions
 
-- **No FIT decoding.** Decoding a FIT file for a run of an hour or more exceeds the free
-  plan's CPU limit, and streams, splits and training load are available from JSON
-  endpoints. Per-lap data would need FIT, so it's left out; it could come back as an
-  opt-in feature for Workers Paid.
+- **Own FIT reader.** FIT files are the only source of per-lap data. `@garmin/fitsdk`
+  took about 60 ms on a marathon, over the free plan's 10 ms CPU limit, and its license
+  is proprietary and restricts distribution. `src/garmin/fit.ts` is a small original
+  reader instead: it reads only the fields it lists and steps over the per-second
+  records, which takes a few milliseconds. It never reads position fields. There's no
+  setting to turn it off: on the free plan a long activity may still go over the limit,
+  which fails only that call and is documented as a known limitation.
 - **Built-in passphrase sign-in.** No third-party identity provider, so a deployment
   needs nothing beyond Cloudflare and a Garmin key. Changing the passphrase signs out
   every app.

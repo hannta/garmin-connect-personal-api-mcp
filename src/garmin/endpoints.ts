@@ -356,3 +356,14 @@ export async function getActivityWorkouts(
     `workouts for activity ${activityId}`,
   );
 }
+
+/** The activity's original file: a ZIP holding one FIT file. */
+export async function getActivityFile(
+  client: GarminClient,
+  activityId: number,
+): Promise<Uint8Array> {
+  return client.getBytes(
+    `/download-service/files/activity/${activityIdPath(activityId)}`,
+    `the file of activity ${activityId}`,
+  );
+}

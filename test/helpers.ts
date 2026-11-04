@@ -23,6 +23,7 @@ export interface RecordedCall {
   url: URL;
   method: string;
   authorization: string | null;
+  accept: string | null;
 }
 
 type Responder = (call: RecordedCall) => Response | Promise<Response>;
@@ -39,6 +40,7 @@ export function mockFetch(responders: Responder[], options: { tokenStatus?: numb
       url,
       method: init?.method ?? 'GET',
       authorization: headers.get('Authorization'),
+      accept: headers.get('Accept'),
     };
     calls.push(call);
     if (url.pathname.endsWith('/personal-api-key/token')) {

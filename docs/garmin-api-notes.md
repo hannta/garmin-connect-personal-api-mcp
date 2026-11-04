@@ -30,7 +30,7 @@ documents most of it; this page covers what the spec leaves out or gets wrong.
 | `GET /activity-service/activity/{id}`                                       | `summaryDTO` + `splitSummaries[]`; **no per-lap array**                                                  |
 | `GET /activity-service/activity/{id}/workouts`                              | The structured workout the activity followed; `[]` for activities not started from one                   |
 | `GET /activity-service/activity/{id}/details?maxChartSize=N`                | **Not in the spec.** Server-side downsampled time series (see below)                                     |
-| `GET /download-service/files/activity/{id}`                                 | ZIP containing one `.fit` file                                                                           |
+| `GET /download-service/files/activity/{id}`                                 | ZIP containing one `.fit` file. Holds the full GPS track, so it's never passed on                        |
 | `…/activity/{id}/splits`, `/typedsplits`, `/hrTimeInZones`, `/exerciseSets` | 404: not in the Personal API                                                                             |
 | Training Readiness, VO2max (`maxmet`), personal records, gear               | 404: not in the Personal API                                                                             |
 
@@ -76,8 +76,17 @@ key and unit; channels include HR, speed, grade-adjusted speed, power, cadence,
 elevation, running dynamics, respiration, stamina, Body Battery and lat / long (stripped
 by this server).
 
-**FIT files** are the only source of per-lap data. Decoding one for an hour-long run or
-longer exceeds the free Workers plan's CPU limit.
+**FIT files** are the only source of per-lap data:
+
+- `lap` messages have pace, HR, power, cadence, running dynamics, intensity and trigger.
+  Their distances add up to the activity's total.
+- `split` messages hold each interval rep (`split_type` active, recovery, warm-up, …),
+  plus run / walk detection splits and, on a plain run, one active split for the whole
+  activity.
+- Strength files have no `lap` messages, although activity search says `lapCount: 1`.
+- Cadence on foot is per leg: `lap` has an integer plus `avg_fractional_cadence`, `split`
+  a value with its fraction included. Doubled, both match `averageRunningCadence…`.
+- Sizes: a marathon was a 440 KB ZIP holding a 1 MB FIT file.
 
 ## Units and formats
 
@@ -101,5 +110,5 @@ longer exceeds the free Workers plan's CPU limit.
   `symptoms`, `moods`.
 - **In the spec but empty so far:** `vO2MaxValue`, `lactateThresholdBpm`,
   `trainingStressScore`, `maxAvgPower_*` in activity search.
-- **Unused spec paths:** FIT download, the older `/usersummary-service/usersummary/daily`
-  and `/weight-service/weight/all`.
+- **Unused spec paths:** the older `/usersummary-service/usersummary/daily` and
+  `/weight-service/weight/all`.

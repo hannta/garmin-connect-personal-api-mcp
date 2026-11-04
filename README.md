@@ -31,6 +31,7 @@ ChatGPT, Cursor or VS Code.
 | `garmin_search_activities`       | Activities in a date range with Garmin IDs and fastest splits, or totals per week                                            |
 | `garmin_get_activity`            | One activity in depth: pace, HR zones, running dynamics, power, training effect, interval totals, strength sets per exercise |
 | `garmin_get_activity_streams`    | One activity's time series (HR, pace, grade-adjusted pace, cadence, power, elevation, …)                                     |
+| `garmin_get_activity_laps`       | One row per lap and interval rep, from the activity's FIT file                                                               |
 | `garmin_get_sleep`               | One night's sleep in detail: score components with optimal ranges, sleep need and why it changed, naps                       |
 | `garmin_get_sleep_summaries`     | Sleep per night over a date range                                                                                            |
 | `garmin_get_hrv`                 | One night's HRV with baseline, status and overnight readings                                                                 |
@@ -60,6 +61,8 @@ ChatGPT, Cursor or VS Code.
 - Output is metric, with the unit in every field name. Dates are `YYYY-MM-DD` in your
   time zone; sleep and HRV are keyed by the wake-up date.
 - Location, sexual activity and sex drive data are never returned.
+- **Known limitation:** `garmin_get_activity_laps` can fail on long activities on the
+  Cloudflare free plan. See [Known limitations](docs/DEPLOY.md#known-limitations).
 
 ## Development
 

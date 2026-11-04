@@ -20,9 +20,10 @@ own copy, pull updates and redeploy.
   `claude.ai`).
 - **Secrets:** the Garmin key and passphrase live only in Worker secrets and are never
   logged or returned.
-- **Your data:** read-only; no health data is stored (KV holds only sign-in data, the
-  Garmin token and your time zone). Location, sexual activity and sex drive logs are
-  never returned. Tests use synthetic data only.
+- **Your data:** read-only. KV holds sign-in data, the Garmin token and your time zone.
+  The only health data stored is lap rows from `garmin_get_activity_laps`, cached for
+  30 days. Location, sexual activity and sex drive logs are never returned or
+  stored. Tests use synthetic data only.
 
 ## Limits
 
