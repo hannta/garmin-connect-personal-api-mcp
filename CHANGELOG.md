@@ -3,6 +3,12 @@
 All notable changes are documented here. The project follows
 [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Added
+
+- Project icon, also declared as the MCP server icon for clients that show one
+
 ## [1.1.0] - 2026-11-05
 
 ### Added

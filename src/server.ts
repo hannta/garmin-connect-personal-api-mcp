@@ -36,6 +36,13 @@ import { getActivityWorkoutsTool } from './tools/workouts';
 export const SERVER_NAME = 'garmin-connect-personal-api-mcp';
 export const SERVER_VERSION = version;
 
+const ASSETS_URL =
+  'https://raw.githubusercontent.com/hannta/garmin-connect-personal-api-mcp/main/assets';
+const SERVER_ICONS = [
+  { src: `${ASSETS_URL}/icon.png`, mimeType: 'image/png', sizes: ['512x512'] },
+  { src: `${ASSETS_URL}/icon.svg`, mimeType: 'image/svg+xml', sizes: ['any'] },
+];
+
 const INSTRUCTIONS = [
   "Read-only access to the user's Garmin Connect data (activities, sleep, HRV, daily",
   'recovery metrics, Body Battery, stress, heart rate, weight, heart-rate zones). All',
@@ -81,7 +88,7 @@ export function createServer(settings: ServerSettings): McpServer {
     });
 
   const server = new McpServer(
-    { name: SERVER_NAME, version: SERVER_VERSION },
+    { name: SERVER_NAME, version: SERVER_VERSION, icons: SERVER_ICONS },
     { instructions: INSTRUCTIONS },
   );
   register(server, context, getDayTool);

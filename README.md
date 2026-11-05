@@ -1,3 +1,5 @@
+<img src="assets/icon.png" alt="Watch with a heart-rate line" width="96">
+
 # Garmin Connect Personal API MCP
 
 > Not affiliated with or endorsed by Garmin. Garmin and Garmin Connect are trademarks of

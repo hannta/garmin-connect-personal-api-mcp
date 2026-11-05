@@ -1,3 +1,5 @@
+import { existsSync } from 'node:fs';
+import { join } from 'node:path';
 import { Client } from '@modelcontextprotocol/client';
 import { InMemoryTransport } from '@modelcontextprotocol/server';
 import { describe, expect, it, vi } from 'vitest';
@@ -105,6 +107,16 @@ describe('MCP server', () => {
       name: 'garmin-connect-personal-api-mcp',
       version: packageJson.version,
     });
+  });
+
+  it('declares its icon', async () => {
+    const client = await connect(testEnv());
+    const icons = client.getServerVersion()?.icons ?? [];
+    expect(icons.map((icon) => icon.mimeType)).toEqual(['image/png', 'image/svg+xml']);
+    for (const icon of icons) {
+      const file = new URL(icon.src).pathname.split('/').pop() ?? '';
+      expect(existsSync(join(import.meta.dirname, '..', 'assets', file))).toBe(true);
+    }
   });
 
   it('lists every tool as read-only', async () => {
