@@ -54,8 +54,17 @@ const garminRoutes = () =>
     '/biometric-service/': () => json(fixture('heart-rate-zones.json')),
   });
 
-async function connect(env: Env, fetchFn?: typeof fetch) {
-  const server = createServer(env, { ...(fetchFn && { fetch: fetchFn }) });
+async function connect(
+  env: Env,
+  fetchFn?: typeof fetch,
+  apiKey: () => string | undefined = () => env.GARMIN_API_KEY,
+) {
+  const server = createServer({
+    apiKey,
+    store: env.GARMIN_KV,
+    timeZone: env.TIMEZONE,
+    ...(fetchFn && { fetch: fetchFn }),
+  });
   const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
   await server.connect(serverTransport);
   const client = new Client({ name: 'test', version: '1.0.0' });
@@ -127,6 +136,16 @@ describe('MCP server', () => {
     const client = await connect(testEnv({ GARMIN_API_KEY: '' }));
     const result = await client.callTool({ name: 'garmin_get_profile', arguments: {} });
     expect(result.isError).toBe(true);
-    expect(text(result)).toMatch(/GARMIN_API_KEY is not set/);
+    expect(text(result)).toMatch(/No Garmin API key is set/);
+  });
+
+  it('reads the key on every call, so a new key works without a restart', async () => {
+    const apiKey = vi.fn<() => string | undefined>();
+    const client = await connect(testEnv(), garminRoutes().fetch, apiKey);
+    const before = await client.callTool({ name: 'garmin_get_profile', arguments: {} });
+    expect(before.isError).toBe(true);
+    apiKey.mockReturnValue(TEST_KEY);
+    const after = await client.callTool({ name: 'garmin_get_profile', arguments: {} });
+    expect(after.isError).toBeFalsy();
   });
 });

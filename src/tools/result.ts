@@ -37,14 +37,17 @@ export function errorResult(message: string): CallToolResult {
   return { content: [{ type: 'text', text: message }], isError: true };
 }
 
+const KEY_HELP =
+  'To save it on a local server, run: npx -y @hannta/garmin-connect-personal-api-mcp auth. On Cloudflare, set the GARMIN_API_KEY secret.';
+
 /** A message that is safe to show: never the API key, tokens or response bodies. */
 export function errorMessage(error: unknown): string {
   if (error instanceof GarminError) {
     switch (error.code) {
       case 'missing_key':
-        return `${error.message} Create a Personal API key in Garmin Connect and set it as the GARMIN_API_KEY secret.`;
+        return `${error.message} Create a Personal API key in Garmin Connect. ${KEY_HELP}`;
       case 'invalid_key':
-        return `${error.message} Personal API keys expire; create a new one in Garmin Connect and update the GARMIN_API_KEY secret.`;
+        return `${error.message} Personal API keys expire; create a new one in Garmin Connect. ${KEY_HELP}`;
       case 'rate_limited':
         return `${error.message} Wait a moment before trying again.`;
       default:

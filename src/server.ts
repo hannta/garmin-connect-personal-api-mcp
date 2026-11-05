@@ -52,27 +52,33 @@ const INSTRUCTIONS = [
   'label any readiness estimate you make from HRV, sleep and load as your own estimate.',
 ].join(' ');
 
-export interface ServerOptions {
+export interface ServerSettings {
+  /** Read on every tool call, so a local server picks up a new key without a restart. */
+  apiKey: () => string | undefined;
+  store: KeyValueStore;
+  /** IANA time zone override; empty or unset means "use the Garmin profile". */
+  timeZone?: string | undefined;
   /** Overrides for tests: Garmin fetch and clock. */
   fetch?: typeof fetch;
   now?: () => Date;
 }
 
-export function createServer(env: Env, options: ServerOptions = {}): McpServer {
-  const store: KeyValueStore = env.GARMIN_KV;
-  const context = createToolContext({
-    client: () => {
-      const tokens = new TokenProvider({
-        apiKey: env.GARMIN_API_KEY,
-        store,
-        ...(options.fetch && { fetch: options.fetch }),
-      });
-      return new GarminClient({ tokens, ...(options.fetch && { fetch: options.fetch }) });
-    },
-    store,
-    timeZoneOverride: env.TIMEZONE,
-    ...(options.now && { now: options.now }),
-  });
+export function createServer(settings: ServerSettings): McpServer {
+  const { store, fetch } = settings;
+  const context = (): ToolContext =>
+    createToolContext({
+      client: () => {
+        const tokens = new TokenProvider({
+          apiKey: settings.apiKey(),
+          store,
+          ...(fetch && { fetch }),
+        });
+        return new GarminClient({ tokens, ...(fetch && { fetch }) });
+      },
+      store,
+      timeZoneOverride: settings.timeZone,
+      ...(settings.now && { now: settings.now }),
+    });
 
   const server = new McpServer(
     { name: SERVER_NAME, version: SERVER_VERSION },
@@ -109,7 +115,7 @@ export function createServer(env: Env, options: ServerOptions = {}): McpServer {
 }
 
 // Not generic: the SDK validates input against each tool's own schema before calling it.
-function register(server: McpServer, context: ToolContext, tool: ToolDefinition): void {
+function register(server: McpServer, context: () => ToolContext, tool: ToolDefinition): void {
   server.registerTool(
     tool.name,
     {
@@ -118,6 +124,6 @@ function register(server: McpServer, context: ToolContext, tool: ToolDefinition)
       inputSchema: tool.inputSchema,
       annotations: { readOnlyHint: true, openWorldHint: false },
     },
-    (input) => runTool(() => tool.run(input, context)),
+    (input) => runTool(() => tool.run(input, context())),
   );
 }

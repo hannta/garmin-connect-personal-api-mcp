@@ -5,7 +5,7 @@ commands, see the README's **Development** section.
 
 ## Principles
 
-- **Single user, self-hosted.** Each person deploys their own copy with their own Garmin
+- **Single user, self-hosted.** Each person runs their own copy with their own Garmin
   key. No shared service, no one else's data.
 - **Read-only.** No tool writes to Garmin.
 - **No real data in the repo.** Test fixtures are synthetic; no keys, personal IDs or
@@ -34,19 +34,35 @@ Cloudflare Worker
 Garmin Connect Personal API
 ```
 
-| Path               | What's there                                                |
-| ------------------ | ----------------------------------------------------------- |
-| `src/index.ts`     | Worker entry                                                |
-| `src/oauth.ts`     | OAuth routes, token lifetimes, grant checks                 |
-| `src/auth/`        | Sign-in page, passphrase check, lockout                     |
-| `src/server.ts`    | MCP server and tool registration                            |
-| `src/garmin/`      | Token, client, one function per endpoint, response types    |
-| `src/tools/`       | The MCP tools and their shared helpers (ranges, formatting) |
-| `src/lib/`         | Date / time-zone and unit helpers                           |
-| `test/`            | Node tests; `test/worker/` runs the OAuth flow in workerd   |
-| `test/fixtures/`   | Synthetic Garmin responses                                  |
-| `scripts/today.ts` | `npm run today`: check a Garmin key locally                 |
-| `docs/`            | Deployment guide, [Garmin API notes](garmin-api-notes.md)   |
+The local server is the same MCP server, tools and Garmin client behind a different front:
+
+```
+MCP client (Claude Code, …)
+   │  MCP over stdio
+   ▼
+Node.js process (dist/cli.mjs, from npm)
+   ├─ MCP server: tools, Garmin client
+   ├─ Key: environment or ~/.config/garmin/connect-personal-api-key
+   └─ Store: private files in ~/.cache/garmin-connect-personal-api-mcp
+   ▼
+Garmin Connect Personal API
+```
+
+| Path                   | What's there                                                |
+| ---------------------- | ----------------------------------------------------------- |
+| `src/index.ts`         | Worker entry                                                |
+| `src/oauth.ts`         | OAuth routes, token lifetimes, grant checks                 |
+| `src/auth/`            | Sign-in page, passphrase check, lockout                     |
+| `src/local/`           | Local server: CLI, key handling, key page, file store       |
+| `src/server.ts`        | MCP server and tool registration                            |
+| `src/garmin/`          | Token, client, one function per endpoint, response types    |
+| `src/tools/`           | The MCP tools and their shared helpers (ranges, formatting) |
+| `src/lib/`             | Date / time-zone and unit helpers                           |
+| `test/`                | Node tests; `test/worker/` runs the OAuth flow in workerd   |
+| `test/fixtures/`       | Synthetic Garmin responses                                  |
+| `scripts/today.ts`     | `npm run today`: check a Garmin key locally                 |
+| `scripts/build-cli.ts` | `npm run build`: bundle the local server                    |
+| `docs/`                | Setup guides, [Garmin API notes](garmin-api-notes.md)       |
 
 ## Conventions
 
@@ -57,8 +73,8 @@ Garmin Connect Personal API
 - **Dates:** inputs are `YYYY-MM-DD` local calendar dates; an omitted date means today
   in the user's time zone. Sleep and HRV are keyed by the wake-up date. Timestamps in
   output are ISO 8601 with offset.
-- **Time zone:** the `TIMEZONE` var, else the Garmin profile's time zone (cached in KV),
-  else UTC with a warning in the response. Workers run in UTC, so "today" must never
+- **Time zone:** the `TIMEZONE` var, else the Garmin profile's time zone (cached in the
+  store), else UTC with a warning in the response. Workers run in UTC, so "today" must never
   come from the server clock.
 - **Ranges:** default to the last 7 days and make one Garmin request per source. A range
   over the endpoint's maximum returns an error with the maximum, and the assistant
@@ -72,6 +88,21 @@ Garmin Connect Personal API
 
 ## Decisions
 
+- **Two ways to run, one server.** `createServer` takes plain settings (a function that
+  returns the key, a store, a time zone) and knows nothing about Cloudflare or Node.js.
+  Only `src/index.ts`, `src/oauth.ts` and `src/auth/` are Worker code, and only
+  `src/local/` is Node.js code. Everything else uses web-standard APIs and must stay that
+  way; `src/local/tsconfig.json` type-checks it without Worker types, and the root
+  `tsconfig.json` without Node.js types.
+- **The npm package is one bundled file.** `npm run build` puts all code in
+  `dist/cli.mjs`, so the package has no runtime dependencies and starts quickly with
+  `npx`. Every dependency is a `devDependency` for that reason; Wrangler bundles the same
+  ones into the Worker.
+- **Garmin's key file.** The local server uses the same variable and file as Garmin's own
+  Personal API tools, so someone who already has a key needs no setup. It doesn't share
+  their token cache: a token is cheap to get, and this keeps one code path for tokens.
+- **No key in the chat.** `auth` takes the key on a temporary page on `127.0.0.1`, so an
+  agent can run the setup without ever seeing the key.
 - **Own FIT reader.** FIT files are the only source of per-lap data. `@garmin/fitsdk`
   took about 60 ms on a marathon, over the free plan's 10 ms CPU limit, and its license
   is proprietary and restricts distribution. `src/garmin/fit.ts` is a small original

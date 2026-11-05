@@ -2,7 +2,8 @@
 
 This guide puts the server on your own Cloudflare account and connects it to an MCP
 client. It takes about ten minutes and fits in the Workers **free plan**, apart from one
-[known limitation](#known-limitations).
+[known limitation](#known-limitations). To run it on your own computer instead, see
+[LOCAL.md](LOCAL.md).
 
 You need:
 
@@ -92,7 +93,7 @@ uses more CPU than the other tools. On the free plan a long activity can go over
 10 ms CPU limit, and that call then fails with a connector error (Cloudflare error 1102).
 A marathon's file took 3–7 ms on a laptop, but this hasn't been measured on Cloudflare.
 Every other tool is unaffected. If you hit this, switch the account to Workers Paid
-($5/month); no code changes are needed.
+($5/month); no code changes are needed. The [local server](LOCAL.md) has no such limit.
 
 Each file is read once, and the laps (never the file) are cached in KV for 30 days.
 

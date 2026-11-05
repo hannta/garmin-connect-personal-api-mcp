@@ -38,7 +38,7 @@ export class TokenProvider {
   constructor(options: TokenProviderOptions) {
     const apiKey = options.apiKey?.trim();
     if (!apiKey || apiKey === 'your-key-here') {
-      throw new GarminError('missing_key', 'GARMIN_API_KEY is not set.');
+      throw new GarminError('missing_key', 'No Garmin API key is set.');
     }
     this.#apiKey = apiKey;
     this.#store = options.store;

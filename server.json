@@ -1,0 +1,32 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.hannta/garmin-connect-personal-api-mcp",
+  "title": "Garmin Connect Personal API",
+  "description": "Read-only Garmin Connect data on Garmin's official Personal API: training, sleep, HRV, recovery.",
+  "repository": {
+    "url": "https://github.com/hannta/garmin-connect-personal-api-mcp",
+    "source": "github"
+  },
+  "websiteUrl": "https://github.com/hannta/garmin-connect-personal-api-mcp#readme",
+  "version": "1.1.0",
+  "packages": [
+    {
+      "registryType": "npm",
+      "identifier": "@hannta/garmin-connect-personal-api-mcp",
+      "version": "1.1.0",
+      "runtimeHint": "npx",
+      "transport": {
+        "type": "stdio"
+      },
+      "environmentVariables": [
+        {
+          "name": "GARMIN_PERSONAL_API_KEY",
+          "description": "Garmin Connect Personal API key (optional: the auth command saves one instead)",
+          "isRequired": false,
+          "isSecret": true,
+          "format": "string"
+        }
+      ]
+    }
+  ]
+}

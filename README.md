@@ -5,13 +5,33 @@
 
 A read-only [MCP](https://modelcontextprotocol.io) server that gives AI assistants your
 own Garmin Connect training, recovery and health data through the official **Garmin
-Connect Personal API**. It runs on your own Cloudflare account, and any MCP client that
-supports remote servers with OAuth can connect to it — for example Claude (web, desktop
-and mobile) as a custom connector.
+Connect Personal API**. Run it on your own computer, or host it on your own Cloudflare
+account to use it from anywhere.
+
+> AI agents: to set this up for a user, follow [docs/AGENT-SETUP.md](docs/AGENT-SETUP.md).
 
 ## Setup
 
-Deploy your own copy to Cloudflare:
+You need a Garmin Connect Personal API key, which you create in Garmin Connect on the web.
+
+### Run locally
+
+The quickest way, for Claude Code, Claude Desktop, Cursor, VS Code and other clients that
+run local servers. Needs Node.js 22+.
+
+Paste this into your coding agent:
+
+```text
+Connect @hannta/garmin-connect-personal-api-mcp
+```
+
+Or do it yourself: [docs/LOCAL.md](docs/LOCAL.md).
+
+### Host on Cloudflare
+
+For Claude on the web and on mobile, and any other client that connects to remote servers
+with OAuth. The free plan is enough, apart from one
+[known limitation](docs/DEPLOY.md#known-limitations).
 
 - **One click:**
 
@@ -74,6 +94,7 @@ cp .dev.vars.example .dev.vars   # then add GARMIN_API_KEY and OWNER_PASSPHRASE
 npm run check                     # typecheck, lint, format check, tests
 npm run today                     # print today's recovery data using your key
 npm run dev                       # MCP server at http://localhost:8787/mcp
+npm run build                     # local server in dist/cli.mjs
 ```
 
 To try the local server, connect the

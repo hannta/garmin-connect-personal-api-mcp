@@ -1,0 +1,10 @@
+{
+  // Node-only code: the local server's entry point and what it needs on top of the shared
+  // code. Node types only, so anything Worker-specific in the shared code fails here.
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "types": ["node"]
+  },
+  "include": ["."],
+  "exclude": []
+}

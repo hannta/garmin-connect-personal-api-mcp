@@ -1,6 +1,6 @@
 {
   // Worker code: Workers runtime types only, so Node-only APIs don't type-check in src/.
-  // test/ and scripts/ have their own tsconfig.json that adds Node types.
+  // test/, scripts/ and src/local/ have their own tsconfig.json with Node types.
   "compilerOptions": {
     "target": "ES2024",
     "lib": ["ES2024"],
@@ -17,5 +17,6 @@
     "skipLibCheck": true,
     "noEmit": true
   },
-  "include": ["src", "worker-configuration.d.ts"]
+  "include": ["src", "worker-configuration.d.ts"],
+  "exclude": ["src/local"]
 }

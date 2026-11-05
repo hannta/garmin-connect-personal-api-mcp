@@ -22,7 +22,7 @@ describe('TokenProvider', () => {
   it('requires a real API key', () => {
     const store = new MemoryStore(now);
     expect(() => new TokenProvider({ apiKey: undefined, store })).toThrow(GarminError);
-    expect(() => new TokenProvider({ apiKey: 'your-key-here', store })).toThrow(/not set/);
+    expect(() => new TokenProvider({ apiKey: 'your-key-here', store })).toThrow(/is set/);
   });
 
   it('exchanges the key with an ApiKey header and caches the token', async () => {

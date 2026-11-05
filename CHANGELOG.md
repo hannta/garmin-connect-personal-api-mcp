@@ -3,6 +3,24 @@
 All notable changes are documented here. The project follows
 [Semantic Versioning](https://semver.org/).
 
+## [1.1.0] - 2026-11-05
+
+### Added
+
+- Local server: run it with `npx` over stdio, with no Cloudflare account. See
+  [docs/LOCAL.md](docs/LOCAL.md). Hosting on Cloudflare works as before.
+- `auth` saves the Garmin key on a temporary local page, with `auth --terminal` for a
+  hidden prompt or stdin and `auth --check` to test the key
+- `doctor` checks the local setup
+- [Setup guide for AI agents](docs/AGENT-SETUP.md), so a coding agent can do the setup
+- The local server uses the same key file and `GARMIN_PERSONAL_API_KEY` variable as
+  Garmin's own Personal API tools, and has no Cloudflare CPU limit on
+  `garmin_get_activity_laps`
+
+### Changed
+
+- Published to npm as `@hannta/garmin-connect-personal-api-mcp`
+
 ## [1.0.0] - 2026-11-04
 
 First public release.

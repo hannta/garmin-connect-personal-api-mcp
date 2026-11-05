@@ -39,7 +39,15 @@ const mcpApiHandler = {
         },
       });
     }
-    const handler = createMcpHandler(() => createServer(env), { route: MCP_ROUTE });
+    const handler = createMcpHandler(
+      () =>
+        createServer({
+          apiKey: () => env.GARMIN_API_KEY,
+          store: env.GARMIN_KV,
+          timeZone: env.TIMEZONE,
+        }),
+      { route: MCP_ROUTE },
+    );
     return handler(request, env, ctx);
   },
 };

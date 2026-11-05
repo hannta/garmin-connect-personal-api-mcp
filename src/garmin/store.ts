@@ -1,5 +1,6 @@
-// Minimal key-value interface for caches. A Workers KVNamespace satisfies it directly;
-// MemoryStore is used by tests and local scripts.
+// Minimal key-value interface for caches. A Workers KVNamespace satisfies it directly, and
+// src/local/file-store.ts is the local server's version. MemoryStore is used by tests and
+// scripts.
 
 export interface KeyValueStore {
   get(key: string): Promise<string | null>;

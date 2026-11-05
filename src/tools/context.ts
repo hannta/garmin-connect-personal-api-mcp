@@ -1,6 +1,6 @@
-// Per-request context shared by the tools: the Garmin client, the clock, the user's
-// time zone and first day of the week. The client is created lazily so `tools/list` works
-// even before GARMIN_API_KEY is set; the profile is read once per request and cached in KV.
+// Per-call context shared by the tools: the Garmin client, the clock, the user's time zone
+// and first day of the week. The client is created lazily so `tools/list` works even
+// before a Garmin key is set; the profile is read once per call and cached in the store.
 
 import type { GarminClient } from '../garmin/client';
 import { getProfileSettings } from '../garmin/endpoints';
@@ -21,7 +21,7 @@ export const WEEKDAYS = [
 ] as const;
 export type Weekday = (typeof WEEKDAYS)[number];
 
-/** The profile settings the tools use, as cached in KV. */
+/** The profile settings the tools use, as cached in the store. */
 interface ProfileBasics {
   timeZone: string | null;
   firstDayOfWeek: Weekday | null;
@@ -41,7 +41,7 @@ export interface ToolContext {
 export interface ToolContextOptions {
   client: () => GarminClient;
   store: KeyValueStore;
-  /** The TIMEZONE var; empty or unset means "use the Garmin profile". */
+  /** The TIMEZONE setting; empty or unset means "use the Garmin profile". */
   timeZoneOverride?: string | undefined;
   now?: () => Date;
 }
@@ -89,7 +89,7 @@ async function resolveUserTimeZone(
   return warning ? { ...resolved, warning } : resolved;
 }
 
-/** Profile basics from KV, or from Garmin (then cached); null if Garmin fails. */
+/** Profile basics from the store, or from Garmin (then cached); null if Garmin fails. */
 async function loadProfile(
   context: ToolContext,
   store: KeyValueStore,
