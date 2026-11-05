@@ -1,7 +1,8 @@
 name: Publish
 
-# Publishes the local server to npm when a version tag is pushed. Signs in with npm
-# trusted publishing, so no npm token is stored in the repository.
+# Stages the local server on npm when a version tag is pushed. It goes live only after a
+# maintainer approves it on npmjs.com with two-factor. Signs in with npm trusted
+# publishing, so no npm token is stored in the repository.
 
 on:
   push:
@@ -24,4 +25,4 @@ jobs:
       - run: npm ci
       - run: test "v$(node -p "require('./package.json').version")" = "$GITHUB_REF_NAME"
       - run: npm run check
-      - run: npm publish
+      - run: npm stage publish

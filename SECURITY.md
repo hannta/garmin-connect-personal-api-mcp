@@ -19,8 +19,9 @@ not in a public issue. Only the latest release is supported.
 - **Your data:** read-only, sent only to your MCP client. The Garmin token, your time zone
   and lap rows (30 days) are cached in private files in
   `~/.cache/garmin-connect-personal-api-mcp`.
-- **Updates:** npm releases are built by GitHub Actions with provenance. To decide when
-  you update, [pin a version](docs/LOCAL.md#updating).
+- **Updates:** releases after 1.1.0 are built by GitHub Actions, and each one goes live
+  on npm only after two-factor approval. To decide when you update,
+  [pin a version](docs/LOCAL.md#updating).
 
 ## Hosting on Cloudflare
 
