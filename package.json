@@ -1,6 +1,6 @@
 {
   "name": "@hannta/garmin-connect-personal-api-mcp",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "Read-only MCP server for the Garmin Connect Personal API. Run it locally or host it on Cloudflare Workers.",
   "author": "Hannu Tapanila",
   "license": "MIT",
