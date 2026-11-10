@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { GarminError } from '../src/garmin/errors';
 import { MemoryStore } from '../src/garmin/store';
 import { TokenProvider, jwtExpiry } from '../src/garmin/token';
-import { NOW_MS, TEST_KEY, fakeJwt, mockFetch } from './helpers';
+import { FailingWriteStore, NOW_MS, TEST_KEY, fakeJwt, mockFetch } from './helpers';
 
 const now = () => NOW_MS;
 
@@ -125,5 +125,39 @@ describe('TokenProvider', () => {
     });
 
     await expect(tokens.getToken()).rejects.toMatchObject({ code: 'invalid_response' });
+  });
+
+  it('returns the token when the cache cannot be written', async () => {
+    const mock = mockFetch([]);
+    const store = new FailingWriteStore(now);
+    const tokens = new TokenProvider({ apiKey: TEST_KEY, store, fetch: mock.fetch, now });
+
+    const first = await tokens.getToken();
+
+    expect(jwtExpiry(first)).toBeGreaterThan(NOW_MS / 1000);
+    // Still held in memory, so the same provider doesn't exchange again.
+    expect(await tokens.getToken()).toBe(first);
+    expect(mock.tokenCalls()).toHaveLength(1);
+  });
+
+  it('gives up when the exchange does not answer in time', async () => {
+    const fetchFn = ((_input: RequestInfo | URL, init?: RequestInit) =>
+      new Promise<Response>((_, reject) => {
+        init?.signal?.addEventListener('abort', () => {
+          reject(init.signal?.reason as Error);
+        });
+      })) as typeof fetch;
+    const tokens = new TokenProvider({
+      apiKey: TEST_KEY,
+      store: new MemoryStore(now),
+      fetch: fetchFn,
+      now,
+      timeoutMs: 20,
+    });
+
+    await expect(tokens.getToken()).rejects.toMatchObject({
+      code: 'network',
+      message: expect.stringContaining('did not answer in time') as unknown,
+    });
   });
 });

@@ -7,6 +7,9 @@ import type { KeyValueStore } from './store';
 export const DEFAULT_BASE_URL = 'https://personal.connectapi.garmin.com';
 const TOKEN_PATH = '/personalapitoken-service/personal-api/personal-api-key/token';
 
+/** How long one Garmin request may take, body included, before it is given up. */
+export const REQUEST_TIMEOUT_MS = 30_000;
+
 /** Refresh this long before the token's own expiry. */
 const REFRESH_MARGIN_SECONDS = 5 * 60;
 /** Workers KV's minimum expirationTtl. */
@@ -24,6 +27,7 @@ export interface TokenProviderOptions {
   baseUrl?: string;
   fetch?: typeof fetch;
   now?: () => number;
+  timeoutMs?: number;
 }
 
 export class TokenProvider {
@@ -32,6 +36,7 @@ export class TokenProvider {
   readonly #baseUrl: string;
   readonly #fetch: typeof fetch;
   readonly #now: () => number;
+  readonly #timeoutMs: number;
   #inFlight: Promise<AccessToken> | undefined;
   #memory: AccessToken | undefined;
 
@@ -45,6 +50,7 @@ export class TokenProvider {
     this.#baseUrl = (options.baseUrl ?? DEFAULT_BASE_URL).replace(/\/+$/, '');
     this.#fetch = options.fetch ?? fetch.bind(globalThis);
     this.#now = options.now ?? Date.now;
+    this.#timeoutMs = options.timeoutMs ?? REQUEST_TIMEOUT_MS;
   }
 
   /** Returns a cached token while it is fresh; otherwise exchanges the key for a new one. */
@@ -88,14 +94,23 @@ export class TokenProvider {
   }
 
   async #exchange(): Promise<AccessToken> {
+    const signal = AbortSignal.timeout(this.#timeoutMs);
     let response: Response;
+    let body: string;
     try {
       response = await this.#fetch(`${this.#baseUrl}${TOKEN_PATH}`, {
         method: 'POST',
         headers: { Accept: '*/*', Authorization: `ApiKey ${this.#apiKey}` },
+        signal,
       });
+      body = await response.text();
     } catch {
-      throw new GarminError('network', 'Could not reach Garmin to exchange the API key.');
+      throw new GarminError(
+        'network',
+        signal.aborted
+          ? 'Garmin did not answer in time when exchanging the API key.'
+          : 'Could not reach Garmin to exchange the API key.',
+      );
     }
     if (response.status === 401 || response.status === 403) {
       throw new GarminError(
@@ -111,7 +126,7 @@ export class TokenProvider {
         response.status,
       );
     }
-    const token = (await response.text()).trim();
+    const token = body.trim();
     const expiresAt = jwtExpiry(token);
     if (expiresAt === undefined) {
       throw new GarminError('invalid_response', 'Garmin token response was not a valid JWT.');
@@ -120,9 +135,10 @@ export class TokenProvider {
     this.#memory = accessToken;
     const ttl = Math.floor(expiresAt - this.#now() / 1000 - REFRESH_MARGIN_SECONDS);
     if (ttl >= MIN_KV_TTL_SECONDS) {
-      await this.#store.put(await this.#cacheKey(), JSON.stringify(accessToken), {
-        expirationTtl: ttl,
-      });
+      // The token works without the cache, so a failed write (KV's daily limit) is fine.
+      await this.#store
+        .put(await this.#cacheKey(), JSON.stringify(accessToken), { expirationTtl: ttl })
+        .catch(() => undefined);
     }
     return accessToken;
   }

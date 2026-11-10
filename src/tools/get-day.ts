@@ -7,7 +7,7 @@ import { dateInput, defineTool } from './define';
 import { activityRow } from './format';
 import { hasSleepData } from './get-sleep';
 import { settledValue, settledWarning } from './result';
-import { minutes } from './summaries';
+import { minutes, nonNegative, positive } from './summaries';
 import { bodyBatteryEvent, bodyBatteryFeedback } from './wellness';
 
 export const getDayTool = defineTool({
@@ -80,10 +80,12 @@ export function formatDay(date: string, timeZone: string, data: DayData, warning
   return {
     date,
     time_zone: timeZone,
-    resting_hr_bpm: summary?.heartRate?.restingValue,
+    // As in the range tools: Garmin's 0 (heart rate, respiration, calories) and negative
+    // stress values mean "no data" and are left out.
+    resting_hr_bpm: positive(summary?.heartRate?.restingValue),
     heart_rate: {
-      min_bpm: summary?.heartRate?.minValue,
-      max_bpm: summary?.heartRate?.maxValue,
+      min_bpm: positive(summary?.heartRate?.minValue),
+      max_bpm: positive(summary?.heartRate?.maxValue),
       alerts: summary?.heartRate?.alertCount || null,
     },
     body_battery: {
@@ -105,8 +107,8 @@ export function formatDay(date: string, timeZone: string, data: DayData, warning
       feedback: bodyBatteryFeedback(summary?.bodyBattery?.dynamicFeedbackEvent),
     },
     stress: {
-      avg: stress?.avgLevel,
-      max: stress?.maxLevel,
+      avg: nonNegative(stress?.avgLevel),
+      max: nonNegative(stress?.maxLevel),
       rest_min: minutes(msToSeconds(stress?.restDurationInMillis)),
       low_min: minutes(msToSeconds(stress?.lowStressDurationInMillis)),
       medium_min: minutes(msToSeconds(stress?.mediumStressDurationInMillis)),
@@ -125,13 +127,13 @@ export function formatDay(date: string, timeZone: string, data: DayData, warning
     },
     steps: summary?.movement?.steps?.value,
     calories_kcal: {
-      total: summary?.calories?.burnedTotal,
+      total: positive(summary?.calories?.burnedTotal),
       active: summary?.calories?.burnedActive,
       eaten: summary?.calories?.consumedValue,
       eaten_goal: summary?.calories?.consumedValue != null ? summary.calories.consumedGoal : null,
     },
     hydration_ml: hydration(summary),
-    avg_respiration_brpm: round(summary?.respiration?.avgValue, 1),
+    avg_respiration_brpm: round(positive(summary?.respiration?.avgValue), 1),
     sleep: hasSleepData(sleep ?? null)
       ? {
           duration: formatHoursMinutes(sleep?.sleepTimeSeconds),
@@ -140,7 +142,7 @@ export function formatDay(date: string, timeZone: string, data: DayData, warning
           deep: formatHoursMinutes(sleep?.deepSleepSeconds),
           rem: formatHoursMinutes(sleep?.remSleepSeconds),
           awake: formatHoursMinutes(sleep?.awakeSleepSeconds),
-          avg_sleep_stress: round(sleep?.avgSleepStress),
+          avg_sleep_stress: round(nonNegative(sleep?.avgSleepStress)),
         }
       : null,
     hrv: hrvSummary

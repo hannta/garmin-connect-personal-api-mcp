@@ -96,6 +96,13 @@ export function makeClient(fetchFn: typeof fetch, store = new MemoryStore(() => 
   return { client, tokens, store };
 }
 
+/** A store whose writes fail, like Workers KV past its daily write limit. */
+export class FailingWriteStore extends MemoryStore {
+  override put(): Promise<void> {
+    return Promise.reject(new Error('KV put() limit exceeded for the day.'));
+  }
+}
+
 export const PROFILE_PATH = '/userprofile-service/userprofile/settings';
 
 /**

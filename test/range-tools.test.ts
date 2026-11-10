@@ -11,7 +11,15 @@ import {
   getHrvSummariesTool,
   getSleepSummariesTool,
 } from '../src/tools/summaries';
-import { NOW_MS, PROFILE_PATH, expectNoPrivateFields, fixture, json, toolSetup } from './helpers';
+import {
+  FailingWriteStore,
+  NOW_MS,
+  PROFILE_PATH,
+  expectNoPrivateFields,
+  fixture,
+  json,
+  toolSetup,
+} from './helpers';
 
 const DAILY = '/usersummary-service/v2/dailysummaries';
 const SLEEP = '/sleep-service/sleep/dailySleepSummariesByDate';
@@ -244,6 +252,17 @@ describe('garmin_search_activities', () => {
     const second = toolSetup({ [SEARCH]: () => json([]) }, { store });
     expect(await second.context.firstDayOfWeek()).toBe('sunday');
     expect(second.paths()).not.toContain(PROFILE_PATH);
+  });
+
+  it('uses the profile when the cache cannot be written', async () => {
+    const store = new FailingWriteStore(() => NOW_MS);
+    const { context } = toolSetup({ [SEARCH]: () => json([]) }, { store });
+
+    const result = await searchActivitiesTool.run({ group_by: 'week' }, context);
+
+    expect(result.time_zone).toBe('Europe/Helsinki');
+    expect(result.warning).toBeUndefined();
+    expect(await context.firstDayOfWeek()).toBe('monday');
   });
 });
 

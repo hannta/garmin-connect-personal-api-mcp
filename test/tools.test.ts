@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { ActivitySummary } from '../src/garmin/types';
+import type { ActivitySummary, DailySleep, DailySummary } from '../src/garmin/types';
 import { MemoryStore } from '../src/garmin/store';
 import { getActivityTool, strengthSummary } from '../src/tools/get-activity';
 import { getDayTool } from '../src/tools/get-day';
@@ -312,6 +312,33 @@ describe('garmin_get_day', () => {
     });
     expect(result.warnings).toBeNull();
     expectNoPrivateFields(result);
+  });
+
+  it('leaves out Garmin\'s "no data" values, like the range tools', async () => {
+    const { data } = fixture('daily-summaries.json') as { data: DailySummary[] };
+    const day: DailySummary = {
+      ...data[0],
+      calendarDate: '2026-03-02',
+      heartRate: { restingValue: 0, minValue: 0, maxValue: 0 },
+      stress: { ...data[0]?.stress, avgLevel: -1, maxLevel: -2 },
+      calories: { burnedTotal: 0, burnedActive: 0 },
+      respiration: { avgValue: 0 },
+    };
+    const night = { ...(fixture('sleep.json') as DailySleep), avgSleepStress: -1 };
+    const { context } = setup({
+      ...allRoutes,
+      '/usersummary-service/': () => json({ data: [day] }),
+      '/sleep-service/': () => json([night]),
+    });
+    const result = await getDayTool.run({ date: '2026-03-02' }, context);
+
+    expect(result.resting_hr_bpm).toBeNull();
+    expect(result.heart_rate).toMatchObject({ min_bpm: null, max_bpm: null });
+    expect(result.stress).toMatchObject({ avg: null, max: null, rest_min: 720 });
+    // Zero active calories is a real value; a zero total is not.
+    expect(result.calories_kcal).toMatchObject({ total: null, active: 0 });
+    expect(result.avg_respiration_brpm).toBeNull();
+    expect(result.sleep).toMatchObject({ score: 81, avg_sleep_stress: null });
   });
 
   it('returns partial data with a warning when one source fails', async () => {
