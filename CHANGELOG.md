@@ -10,6 +10,8 @@ All notable changes are documented here. The project follows
 - A cache write that fails (for example at Workers KV's daily write limit) no longer
   fails the tool call or makes dates fall back to UTC: the Garmin token and the profile
   time zone are used without being cached
+- Requests to Garmin time out after 30 seconds instead of waiting without limit, so a
+  stalled connection ends as a readable tool error
 
 ## [1.1.1] - 2026-11-05
 

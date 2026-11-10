@@ -139,4 +139,25 @@ describe('TokenProvider', () => {
     expect(await tokens.getToken()).toBe(first);
     expect(mock.tokenCalls()).toHaveLength(1);
   });
+
+  it('gives up when the exchange does not answer in time', async () => {
+    const fetchFn = ((_input: RequestInfo | URL, init?: RequestInit) =>
+      new Promise<Response>((_, reject) => {
+        init?.signal?.addEventListener('abort', () => {
+          reject(init.signal?.reason as Error);
+        });
+      })) as typeof fetch;
+    const tokens = new TokenProvider({
+      apiKey: TEST_KEY,
+      store: new MemoryStore(now),
+      fetch: fetchFn,
+      now,
+      timeoutMs: 20,
+    });
+
+    await expect(tokens.getToken()).rejects.toMatchObject({
+      code: 'network',
+      message: expect.stringContaining('did not answer in time') as unknown,
+    });
+  });
 });

@@ -1,6 +1,41 @@
 import { describe, expect, it } from 'vitest';
+import { GarminClient } from '../src/garmin/client';
 import { GarminError } from '../src/garmin/errors';
-import { json, makeClient, mockFetch } from './helpers';
+import { MemoryStore } from '../src/garmin/store';
+import { TokenProvider } from '../src/garmin/token';
+import { NOW_MS, TEST_KEY, json, makeClient, mockFetch } from './helpers';
+
+/**
+ * A client with a 20 ms time limit whose data requests go to `respond`, which gets the
+ * request's abort signal the way a real fetch does. Token requests answer at once.
+ */
+function clientWithTimeout(respond: (signal: AbortSignal) => Promise<Response>) {
+  const mock = mockFetch([]);
+  let dataCalls = 0;
+  const fetchFn = ((input: RequestInfo | URL, init?: RequestInit) => {
+    const url = input instanceof Request ? input.url : input.toString();
+    if (url.endsWith('/personal-api-key/token')) return mock.fetch(input, init);
+    dataCalls += 1;
+    if (!init?.signal) throw new Error('Request without a signal');
+    return respond(init.signal);
+  }) as typeof fetch;
+  const store = new MemoryStore(() => NOW_MS);
+  const tokens = new TokenProvider({ apiKey: TEST_KEY, store, fetch: fetchFn, now: () => NOW_MS });
+  const client = new GarminClient({
+    tokens,
+    fetch: fetchFn,
+    sleep: () => Promise.resolve(),
+    timeoutMs: 20,
+  });
+  return { client, dataCalls: () => dataCalls };
+}
+
+const aborted = (signal: AbortSignal) =>
+  new Promise<never>((_, reject) => {
+    signal.addEventListener('abort', () => {
+      reject(signal.reason as Error);
+    });
+  });
 
 describe('GarminClient', () => {
   it('sends a bearer token and builds the query, skipping undefined values', async () => {
@@ -105,5 +140,52 @@ describe('GarminClient.getBytes', () => {
     const { client } = makeClient(mock.fetch);
     await expect(client.getBytes('/files/1', 'file 1')).rejects.toThrow(/no data for file 1/);
     expect(mock.dataCalls()).toHaveLength(2);
+  });
+
+  it('gives up without retrying when Garmin does not answer in time', async () => {
+    const { client, dataCalls } = clientWithTimeout(aborted);
+
+    await expect(client.getJson('/x', {}, 'sleep for 2026-03-02')).rejects.toMatchObject({
+      code: 'network',
+      message: 'Garmin did not answer in time for sleep for 2026-03-02.',
+    });
+    expect(dataCalls()).toBe(1);
+  });
+
+  it('applies the time limit to a body that stalls', async () => {
+    const { client, dataCalls } = clientWithTimeout((signal) => {
+      const body = new ReadableStream<Uint8Array>({
+        start(controller) {
+          controller.enqueue(new TextEncoder().encode('{"ok":'));
+          signal.addEventListener('abort', () => {
+            controller.error(signal.reason);
+          });
+        },
+      });
+      return Promise.resolve(new Response(body));
+    });
+
+    await expect(client.getBytes('/file', 'the file of activity 1')).rejects.toMatchObject({
+      code: 'network',
+      message: 'Garmin did not answer in time for the file of activity 1.',
+    });
+    expect(dataCalls()).toBe(1);
+  });
+
+  it('retries once when the body fails to arrive', async () => {
+    let attempt = 0;
+    const { client, dataCalls } = clientWithTimeout(() => {
+      attempt += 1;
+      if (attempt > 1) return Promise.resolve(json({ ok: true }));
+      const body = new ReadableStream<Uint8Array>({
+        start(controller) {
+          controller.error(new TypeError('terminated'));
+        },
+      });
+      return Promise.resolve(new Response(body));
+    });
+
+    await expect(client.getJson('/x')).resolves.toEqual({ ok: true });
+    expect(dataCalls()).toBe(2);
   });
 });
