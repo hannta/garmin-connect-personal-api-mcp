@@ -110,9 +110,10 @@ async function loadProfile(
       firstDayOfWeek: WEEKDAYS.find((day) => day === dayName) ?? null,
     };
     if (basics.timeZone && isValidTimeZone(basics.timeZone)) {
-      await store.put(PROFILE_KEY, JSON.stringify(basics), {
-        expirationTtl: PROFILE_TTL_SECONDS,
-      });
+      // The profile is usable without the cache, so a failed write (KV's daily limit) is fine.
+      await store
+        .put(PROFILE_KEY, JSON.stringify(basics), { expirationTtl: PROFILE_TTL_SECONDS })
+        .catch(() => undefined);
     }
     return basics;
   } catch {

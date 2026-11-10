@@ -3,6 +3,14 @@
 All notable changes are documented here. The project follows
 [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Fixed
+
+- A cache write that fails (for example at Workers KV's daily write limit) no longer
+  fails the tool call or makes dates fall back to UTC: the Garmin token and the profile
+  time zone are used without being cached
+
 ## [1.1.1] - 2026-11-05
 
 ### Added

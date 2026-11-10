@@ -120,9 +120,10 @@ export class TokenProvider {
     this.#memory = accessToken;
     const ttl = Math.floor(expiresAt - this.#now() / 1000 - REFRESH_MARGIN_SECONDS);
     if (ttl >= MIN_KV_TTL_SECONDS) {
-      await this.#store.put(await this.#cacheKey(), JSON.stringify(accessToken), {
-        expirationTtl: ttl,
-      });
+      // The token works without the cache, so a failed write (KV's daily limit) is fine.
+      await this.#store
+        .put(await this.#cacheKey(), JSON.stringify(accessToken), { expirationTtl: ttl })
+        .catch(() => undefined);
     }
     return accessToken;
   }
